@@ -284,14 +284,14 @@
 //   <i> Defines the Safety Class number.
 //   <i> Default: 0
 #ifndef OS_TIMER_THREAD_CLASS
-#define OS_TIMER_THREAD_CLASS       0
+#define OS_TIMER_THREAD_CLASS       1
 #endif
  
 //   <o>Timer Thread Zone <0-127>
 //   <i> Defines Thread Zone.
 //   <i> Default: 0
 #ifndef OS_TIMER_THREAD_ZONE
-#define OS_TIMER_THREAD_ZONE        0
+#define OS_TIMER_THREAD_ZONE        2
 #endif
  
 //   <o>Timer Callback Queue entries <0-256>

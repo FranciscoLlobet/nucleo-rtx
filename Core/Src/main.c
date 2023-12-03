@@ -54,7 +54,8 @@ osThreadId_t defaultTaskHandle;
 const osThreadAttr_t defaultTask_attributes = {
   .name = "defaultTask",
   .priority = (osPriority_t) osPriorityNormal,
-  .stack_size = 128 * 4
+  .stack_size = 128 * 4,
+  .attr_bits = osThreadZone(1) | osSafetyClass(1),
 };
 /* USER CODE BEGIN PV */
 
@@ -395,7 +396,7 @@ static void MX_GPIO_Init(void)
 
   /*Configure GPIO pin : B1_Pin */
   GPIO_InitStruct.Pin = B1_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING_FALLING;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(B1_GPIO_Port, &GPIO_InitStruct);
 
@@ -414,18 +415,26 @@ static void MX_GPIO_Init(void)
 /* USER CODE END MX_GPIO_Init_2 */
 }
 
+/* Button Event Flags */
+osEventFlagsId_t button_event = NULL;
+
 /* USER CODE BEGIN 4 */
 void led_timer(void * argument)
 {
-	osSemaphoreId_t led_sem = (osSemaphoreId_t)argument;
+	osThreadId_t led_sem = (osThreadId_t)argument;
+
 	volatile osStatus_t os_status = osOK;
 
-	os_status = osSemaphoreRelease(led_sem);
+	os_status = osThreadFlagsSet(led_sem, 0x1);
 	if(os_status != osOK)
 	{
 		__BKPT(1);
 	}
 }
+
+
+
+
 /* USER CODE END 4 */
 
 /* USER CODE BEGIN Header_StartDefaultTask */
@@ -440,20 +449,39 @@ void StartDefaultTask(void *argument)
   /* USER CODE BEGIN 5 */
   /* Infinite loop */
 	osTimerAttr_t sec_timer_attr = {.name = "led_timer", .attr_bits = 0, .cb_mem = NULL, .cb_size = 0};
-	osSemaphoreAttr_t led_sem_attr = {.name = NULL, .attr_bits = osSafetyClass(0), .cb_mem = NULL, .cb_size = 0};
+	osTimerId_t sec_timer = osTimerNew(led_timer, osTimerPeriodic, osThreadGetId(), &sec_timer_attr);
 
-	osSemaphoreId_t led_sem = osSemaphoreNew(1, 1, &led_sem_attr);
+	osEventFlagsAttr_t event_attr = {.name = NULL, .attr_bits = osSafetyClass(0), .cb_mem = NULL, .cb_size = 0};
 
-	osTimerId_t sec_timer = osTimerNew(led_timer, osTimerPeriodic, led_sem, &sec_timer_attr);
+	button_event = osEventFlagsNew(&event_attr);
 
 	osTimerStart(sec_timer, 1000);
 
   for(;;)
   {
-	  if(osOK == osSemaphoreAcquire(led_sem, osWaitForever))
+	  volatile uint32_t flags = osThreadFlagsWait(0xFF, osFlagsWaitAny, osWaitForever);
+	  if(flags == 0x1)
 	  {
-		  HAL_GPIO_TogglePin(LD2_GPIO_Port, LD2_Pin);
+		  if(0x1 & osEventFlagsGet(button_event))
+		  {
+			  HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_SET);
+			  //HAL_GPIO_TogglePin(LD2_GPIO_Port, LD2_Pin);
+			  osEventFlagsClear(button_event, 0x1);
+		  }
+		  else  if(0x2 & osEventFlagsGet(button_event))
+		  {
+			  HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_RESET);
+			  osEventFlagsClear(button_event, 0x2);
+		  }
+
+
+
 	  }
+	  else if(flags == osFlagsErrorParameter)
+	  {
+
+	  }
+	  (void)osThreadFlagsClear(0xFF);
   }
   /* USER CODE END 5 */
 }
