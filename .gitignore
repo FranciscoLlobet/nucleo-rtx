@@ -50,9 +50,6 @@ modules.order
 Module.symvers
 Mkfile.old
 dkms.conf
-<<<<<<< HEAD
-=======
 
 Debug
 
->>>>>>> feature/first-commit
