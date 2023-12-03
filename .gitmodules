@@ -1,0 +1,6 @@
+[submodule "Middlewares/Third_Party/CMSIS-RTX"]
+	path = Middlewares/Third_Party/CMSIS-RTX
+	url = https://github.com/FranciscoLlobet/CMSIS-RTX.git
+[submodule "Middlewares/Third_Party/CMSIS_6"]
+	path = Middlewares/Third_Party/CMSIS_6
+	url = https://github.com/FranciscoLlobet/CMSIS_6.git
