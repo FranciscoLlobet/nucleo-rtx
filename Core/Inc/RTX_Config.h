@@ -155,7 +155,7 @@
 //     <i> Defines maximum number of user threads that can be active at the same time.
 //     <i> Applies to user threads with system provided memory for control blocks.
 #ifndef OS_THREAD_NUM
-#define OS_THREAD_NUM               1
+#define OS_THREAD_NUM               10
 #endif
  
 //     <o>Number of user Threads with default Stack size <0-1000>
@@ -248,7 +248,7 @@
 //     <i> Defines maximum number of objects that can be active at the same time.
 //     <i> Applies to objects with system provided memory for control blocks.
 #ifndef OS_TIMER_NUM
-#define OS_TIMER_NUM                1
+#define OS_TIMER_NUM                10
 #endif
  
 //   </e>
@@ -284,14 +284,14 @@
 //   <i> Defines the Safety Class number.
 //   <i> Default: 0
 #ifndef OS_TIMER_THREAD_CLASS
-#define OS_TIMER_THREAD_CLASS       1
+#define OS_TIMER_THREAD_CLASS       0
 #endif
  
 //   <o>Timer Thread Zone <0-127>
 //   <i> Defines Thread Zone.
 //   <i> Default: 0
 #ifndef OS_TIMER_THREAD_ZONE
-#define OS_TIMER_THREAD_ZONE        2
+#define OS_TIMER_THREAD_ZONE        0
 #endif
  
 //   <o>Timer Callback Queue entries <0-256>

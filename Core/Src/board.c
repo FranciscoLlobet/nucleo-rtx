@@ -27,11 +27,11 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 			pin_state = HAL_GPIO_ReadPin(B1_GPIO_Port, B1_Pin);
 			if(pin_state == GPIO_PIN_SET)
 			{
-				(void)osEventFlagsSet(button_event, 0x1);
+				//(void)osEventFlagsSet(button_event, 0x1);
 			}
 			else
 			{
-				(void)osEventFlagsSet(button_event, 0x2);
+				//(void)osEventFlagsSet(button_event, 0x2);
 			}
 		}
 		break;

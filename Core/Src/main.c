@@ -22,7 +22,8 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "job_queue.h"
+#include "spi.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -45,17 +46,20 @@ UART_HandleTypeDef hlpuart1;
 
 RTC_HandleTypeDef hrtc;
 
+SPI_HandleTypeDef hspi1;
+
 TIM_HandleTypeDef htim1;
 
 WWDG_HandleTypeDef hwwdg;
+
+job_queue_t job_queue;
 
 /* Definitions for defaultTask */
 osThreadId_t defaultTaskHandle;
 const osThreadAttr_t defaultTask_attributes = {
   .name = "defaultTask",
   .priority = (osPriority_t) osPriorityNormal,
-  .stack_size = 128 * 4,
-  .attr_bits = osThreadZone(1) | osSafetyClass(1),
+  .stack_size = 128 * 4
 };
 /* USER CODE BEGIN PV */
 
@@ -68,6 +72,7 @@ static void MX_LPUART1_UART_Init(void);
 static void MX_TIM1_Init(void);
 static void MX_RTC_Init(void);
 static void MX_WWDG_Init(void);
+static void MX_SPI1_Init(void);
 void StartDefaultTask(void *argument);
 
 /* USER CODE BEGIN PFP */
@@ -85,6 +90,7 @@ void StartDefaultTask(void *argument);
   */
 int main(void)
 {
+
   /* USER CODE BEGIN 1 */
 
   /* USER CODE END 1 */
@@ -110,7 +116,8 @@ int main(void)
   MX_LPUART1_UART_Init();
   MX_TIM1_Init();
   MX_RTC_Init();
-  MX_WWDG_Init();
+  // MX_WWDG_Init();
+  MX_SPI1_Init();
   /* USER CODE BEGIN 2 */
 
   /* USER CODE END 2 */
@@ -150,6 +157,7 @@ int main(void)
   osKernelStart();
 
   /* We should never get here as control is now taken by the scheduler */
+
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
@@ -298,6 +306,51 @@ static void MX_RTC_Init(void)
 }
 
 /**
+  * @brief SPI1 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_SPI1_Init(void)
+{
+
+  /* USER CODE BEGIN SPI1_Init 0 */
+
+  /* USER CODE END SPI1_Init 0 */
+
+  /* USER CODE BEGIN SPI1_Init 1 */
+
+  /* USER CODE END SPI1_Init 1 */
+  /* SPI1 parameter configuration*/
+  hspi1.Instance = SPI1;
+  hspi1.Init.Mode = SPI_MODE_MASTER;
+  hspi1.Init.Direction = SPI_DIRECTION_2LINES;
+  hspi1.Init.DataSize = SPI_DATASIZE_8BIT;
+  hspi1.Init.CLKPolarity = SPI_POLARITY_HIGH;
+  hspi1.Init.CLKPhase = SPI_PHASE_2EDGE;
+  hspi1.Init.NSS = SPI_NSS_SOFT;
+  hspi1.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_128; // SPI_BAUDRATEPRESCALER_64;
+  hspi1.Init.FirstBit = SPI_FIRSTBIT_MSB;
+  hspi1.Init.TIMode = SPI_TIMODE_DISABLE;
+  hspi1.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
+  hspi1.Init.CRCPolynomial = 7;
+  hspi1.Init.CRCLength = SPI_CRC_LENGTH_DATASIZE;
+  hspi1.Init.NSSPMode = SPI_NSS_PULSE_DISABLE;
+  if (HAL_SPI_Init(&hspi1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN SPI1_Init 2 */
+
+  HAL_NVIC_SetPriority(SPI1_IRQn, 5, 0);
+
+  HAL_NVIC_ClearPendingIRQ(SPI1_IRQn);
+
+  HAL_NVIC_EnableIRQ(SPI1_IRQn);
+  /* USER CODE END SPI1_Init 2 */
+
+}
+
+/**
   * @brief TIM1 Initialization Function
   * @param None
   * @retval None
@@ -361,7 +414,7 @@ static void MX_WWDG_Init(void)
   /* USER CODE END WWDG_Init 1 */
   hwwdg.Instance = WWDG;
   hwwdg.Init.Prescaler = WWDG_PRESCALER_1;
-  hwwdg.Init.Window = 127;
+  hwwdg.Init.Window = 64;
   hwwdg.Init.Counter = 127;
   hwwdg.Init.EWIMode = WWDG_EWI_DISABLE;
   if (HAL_WWDG_Init(&hwwdg) != HAL_OK)
@@ -382,8 +435,8 @@ static void MX_WWDG_Init(void)
 static void MX_GPIO_Init(void)
 {
   GPIO_InitTypeDef GPIO_InitStruct = {0};
-/* USER CODE BEGIN MX_GPIO_Init_1 */
-/* USER CODE END MX_GPIO_Init_1 */
+  /* USER CODE BEGIN MX_GPIO_Init_1 */
+  /* USER CODE END MX_GPIO_Init_1 */
 
   /* GPIO Ports Clock Enable */
   __HAL_RCC_GPIOC_CLK_ENABLE();
@@ -392,50 +445,55 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOB_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_6, GPIO_PIN_RESET);
 
   /*Configure GPIO pin : B1_Pin */
   GPIO_InitStruct.Pin = B1_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING_FALLING;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(B1_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : LD2_Pin */
-  GPIO_InitStruct.Pin = LD2_Pin;
+  /*Configure GPIO pin : PB6 */
+  GPIO_InitStruct.Pin = GPIO_PIN_6;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(LD2_GPIO_Port, &GPIO_InitStruct);
+  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
   /* EXTI interrupt init*/
   HAL_NVIC_SetPriority(EXTI15_10_IRQn, 5, 0);
   HAL_NVIC_EnableIRQ(EXTI15_10_IRQn);
 
-/* USER CODE BEGIN MX_GPIO_Init_2 */
-/* USER CODE END MX_GPIO_Init_2 */
+  /* USER CODE BEGIN MX_GPIO_Init_2 */
+  /* USER CODE END MX_GPIO_Init_2 */
 }
-
-/* Button Event Flags */
-osEventFlagsId_t button_event = NULL;
 
 /* USER CODE BEGIN 4 */
 void led_timer(void * argument)
 {
-	osThreadId_t led_sem = (osThreadId_t)argument;
+	(void)argument;
 
-	volatile osStatus_t os_status = osOK;
-
-	os_status = osThreadFlagsSet(led_sem, 0x1);
-	if(os_status != osOK)
-	{
-		__BKPT(1);
-	}
+//	(void)enqueue_job(&job_queue, 0, led_toggle, &led_state);
 }
 
+osTimerId_t sec_timer;
 
+void init_led_timer(void)
+{
+	osTimerAttr_t sec_timer_attr = {.name = "led_timer", .attr_bits = 0, .cb_mem = NULL, .cb_size = 0};
 
+	sec_timer = osTimerNew(led_timer, osTimerPeriodic, NULL, &sec_timer_attr);
 
+	//osTimerStart(sec_timer, 1000);
+}
 /* USER CODE END 4 */
+
+uint8_t tx_buf[1024];
+
+void spi_cb(uint32_t event)
+{
+	(void)event;
+}
 
 /* USER CODE BEGIN Header_StartDefaultTask */
 /**
@@ -446,42 +504,13 @@ void led_timer(void * argument)
 /* USER CODE END Header_StartDefaultTask */
 void StartDefaultTask(void *argument)
 {
-  /* USER CODE BEGIN 5 */
-  /* Infinite loop */
-	osTimerAttr_t sec_timer_attr = {.name = "led_timer", .attr_bits = 0, .cb_mem = NULL, .cb_size = 0};
-	osTimerId_t sec_timer = osTimerNew(led_timer, osTimerPeriodic, osThreadGetId(), &sec_timer_attr);
-
-	osEventFlagsAttr_t event_attr = {.name = NULL, .attr_bits = osSafetyClass(0), .cb_mem = NULL, .cb_size = 0};
-
-	button_event = osEventFlagsNew(&event_attr);
-
-	osTimerStart(sec_timer, 1000);
+	SPI1_Driver.Initialize(spi_cb);
 
   for(;;)
   {
-	  volatile uint32_t flags = osThreadFlagsWait(0xFF, osFlagsWaitAny, osWaitForever);
-	  if(flags == 0x1)
-	  {
-		  if(0x1 & osEventFlagsGet(button_event))
-		  {
-			  HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_SET);
-			  //HAL_GPIO_TogglePin(LD2_GPIO_Port, LD2_Pin);
-			  osEventFlagsClear(button_event, 0x1);
-		  }
-		  else  if(0x2 & osEventFlagsGet(button_event))
-		  {
-			  HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_RESET);
-			  osEventFlagsClear(button_event, 0x2);
-		  }
+	(void)SPI1_Driver.Send(tx_buf, sizeof(tx_buf));
 
-
-
-	  }
-	  else if(flags == osFlagsErrorParameter)
-	  {
-
-	  }
-	  (void)osThreadFlagsClear(0xFF);
+	//osDelay(1);
   }
   /* USER CODE END 5 */
 }
@@ -499,7 +528,8 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
   /* USER CODE BEGIN Callback 0 */
 
   /* USER CODE END Callback 0 */
-  if (htim->Instance == TIM7) {
+  if (htim->Instance == TIM7)
+  {
     HAL_IncTick();
   }
   /* USER CODE BEGIN Callback 1 */
