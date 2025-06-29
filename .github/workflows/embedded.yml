@@ -29,5 +29,4 @@ jobs:
         shell: bash
         run: |
           uv sync
-          alias zig='${{ env.ZIG_CMD}}'
-          zig version
+          ${{ env.ZIG_CMD }}
