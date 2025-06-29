@@ -23,10 +23,11 @@ jobs:
       - name: Install uv
         uses: astral-sh/setup-uv@v5
         with:
-          enable-caching: true
+          enable-cache: true
 
       - name: Install Python dependencies
         shell: bash
         run: |
           uv sync
-          ${{ env.ZIG_CMD }} version
+          alias zig=${{ env.ZIG_CMD}}
+          zig version
