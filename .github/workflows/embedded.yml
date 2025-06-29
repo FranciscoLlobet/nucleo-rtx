@@ -1,0 +1,32 @@
+name: Embedded Build
+
+on:
+  push:
+    branches: [ "*" ]
+  pull_request:
+    branches: [ "master"]
+
+env:
+  ZIG_CMD: "python -m ziglang"
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+
+    env:
+      UV_PROJECT_ENVIRONMENT: /opt/venv
+
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-caching: true
+
+      - name: Install Python dependencies
+        shell: bash
+        run: |
+          uv sync
+          ${{ env.ZIG_CMD }} version
