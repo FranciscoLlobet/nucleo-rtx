@@ -7,7 +7,7 @@ on:
     branches: [ "master"]
 
 env:
-  ZIG_CMD: "python -m ziglang"
+  ZIG_CMD: "uv run python -m ziglang"
 
 jobs:
   build:
