@@ -56,3 +56,6 @@ Debug
 uv.lock
 .venv
 .python-version
+
+.zig-cache
+zig-out

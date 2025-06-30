@@ -7,3 +7,6 @@
 [submodule "sensors/no-OS"]
 	path = sensors/no-OS
 	url = https://github.com/analogdevicesinc/no-OS.git
+[submodule "picolibc/picolibc"]
+	path = picolibc/picolibc
+	url = https://github.com/FranciscoLlobet/picolibc.git
