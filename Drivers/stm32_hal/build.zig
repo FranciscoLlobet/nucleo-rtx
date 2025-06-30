@@ -22,6 +22,7 @@ pub fn build(b: *std.Build) void {
     });
 
     lib.addCSourceFiles(.{ .files = &.{
+        "STM32G4xx_HAL_Driver/Src/stm32g4xx_hal.c",
         "STM32G4xx_HAL_Driver/Src/stm32g4xx_hal_cortex.c",
         "STM32G4xx_HAL_Driver/Src/stm32g4xx_hal_dma_ex.c",
         "STM32G4xx_HAL_Driver/Src/stm32g4xx_hal_dma.c",
@@ -43,10 +44,9 @@ pub fn build(b: *std.Build) void {
         "STM32G4xx_HAL_Driver/Src/stm32g4xx_hal_uart_ex.c",
         "STM32G4xx_HAL_Driver/Src/stm32g4xx_hal_uart.c",
         "STM32G4xx_HAL_Driver/Src/stm32g4xx_hal_wwdg.c",
-        "STM32G4xx_HAL_Driver/Src/stm32g4xx_hal.c",
     }, .flags = &.{
+        "-Og",
         "-std=c99",
-        "-O2",
         "-DCMSIS_device_header=\"stm32g4xx.h\"",
         "-DSTM32G474xx",
         "-DUSE_HAL_DRIVER",

@@ -21,21 +21,21 @@ pub fn build(b: *std.Build) void {
         .optimize = optimize,
     });
 
-    lib.addAssemblyFile(b.path("Startup/startup_stm32g474retx.s"));
+    lib.addAssemblyFile(b.path("Startup/startup.s"));
 
     lib.addCSourceFiles(.{ .files = &.{
         "Src/main.c",
-        "Src/system_stm32g4xx.c",
+
         "Src/RTX_Config.c",
         "Src/spi.c",
-        "Src/stm32g4xx_hal_msp.c",
-        "Src/stm32g4xx_hal_timebase_tim.c",
-        "Src/stm32g4xx_it.c",
+
         "../sensors/no-OS/drivers/adc/ad7124/ad7124.c",
         "../sensors/no-OS/drivers/adc/ad7124/ad7124_regs.c",
         "../sensors/no-OS/util/no_os_util.c",
     }, .flags = &.{
         "-std=c99",
+        "-Og",
+        "-DCMSIS_device_header=\"stm32g4xx.h\"",
         "-DSTM32G474xx",
         "-DUSE_HAL_DRIVER",
         "-ffunction-sections",
