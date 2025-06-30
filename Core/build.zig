@@ -4,23 +4,24 @@ const std = @import("std");
 // declaratively construct a build graph that will be executed by an external
 // runner.
 pub fn build(b: *std.Build) void {
-
-    //const target = b.standardTargetOptions(.{});
-    const target = b.resolveTargetQuery(.{
-        .cpu_arch = .thumb,
-        .os_tag = .freestanding,
-        .abi = .eabi,
-        .cpu_model = .{ .explicit = &std.Target.arm.cpu.cortex_m33 },
-    });
+    const target = b.standardTargetOptions(.{});
+    //const target = b.resolveTargetQuery(.{
+    //    .cpu_arch = .thumb,
+    //    .os_tag = .freestanding,
+    //    .abi = .eabi,
+    //    .cpu_model = .{ .explicit = &std.Target.arm.cpu.cortex_m4 },
+    //});
 
     const optimize = b.standardOptimizeOption(.{});
 
     const lib = b.addStaticLibrary(.{
-        .name = "core",
+        .name = "Core",
         .root_source_file = b.path("Src/root.zig"),
         .target = target,
         .optimize = optimize,
     });
+
+    lib.addAssemblyFile(b.path("Startup/startup_stm32g474retx.s"));
 
     lib.addCSourceFiles(.{ .files = &.{
         "Src/main.c",
@@ -30,24 +31,26 @@ pub fn build(b: *std.Build) void {
         "Src/stm32g4xx_hal_msp.c",
         "Src/stm32g4xx_hal_timebase_tim.c",
         "Src/stm32g4xx_it.c",
+        "../sensors/no-OS/drivers/adc/ad7124/ad7124.c",
+        "../sensors/no-OS/drivers/adc/ad7124/ad7124_regs.c",
+        "../sensors/no-OS/util/no_os_util.c",
     }, .flags = &.{
         "-std=c99",
-        "-DCMSIS_device_header=stm32g4xx.h",
         "-DSTM32G474xx",
-        "-DEBUG -DUSE_HAL_DRIVER",
+        "-DUSE_HAL_DRIVER",
+        "-ffunction-sections",
+        "-fdata-sections",
     } });
 
     lib.addIncludePath(b.path("Inc"));
-    lib.addIncludePath(b.path("../Drivers/STM32G4xx_HAL_Driver/Inc"));
+    lib.addIncludePath(b.path("../Drivers/stm32_hal/STM32G4xx_HAL_Driver/Inc"));
     lib.addIncludePath(b.path("../Drivers/CMSIS/Device/ST/STM32G4xx/Include"));
     lib.addIncludePath(b.path("../Middlewares/Third_Party/CMSIS_6/CMSIS/Core/Include"));
     lib.addIncludePath(b.path("../Middlewares/Third_Party/CMSIS_6/CMSIS/RTOS2/Include"));
     lib.addIncludePath(b.path("../Middlewares/Third_Party/CMSIS-RTX/Include"));
     lib.addIncludePath(b.path("../picolibc/include"));
+    //lib.addSystemIncludePath(b.path("../picolibc/include"));
     lib.addIncludePath(b.path("../sensors/no-OS/include"));
     lib.addIncludePath(b.path("../sensors/no-OS/drivers/adc/ad7124"));
     b.installArtifact(lib);
-
-    // const lib_module = b.addModule("core", .{ .root_source_file = b.path("src/root.zig"), .target = target, .optimize = optimize });
-
 }

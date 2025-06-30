@@ -2,3 +2,7 @@
 //! you are making an executable, the convention is to delete this file and
 //! start with main.zig instead.
 const std = @import("std");
+
+const c_stm32_hal = @cImport({
+    @cInclude("stm32g4xx_hal.h");
+});
