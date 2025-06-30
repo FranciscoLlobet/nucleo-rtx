@@ -9,8 +9,10 @@ pub fn build(b: *std.Build) void {
     const target = b.resolveTargetQuery(.{
         .cpu_arch = .thumb,
         .os_tag = .freestanding,
-        .abi = .eabi,
-        .cpu_model = .{ .explicit = &std.Target.arm.cpu.cortex_m4 },
+        .abi = .eabihf,
+        .cpu_model = .{
+            .explicit = &std.Target.arm.cpu.cortex_m4,
+        },
     });
 
     const optimize = b.standardOptimizeOption(.{});
