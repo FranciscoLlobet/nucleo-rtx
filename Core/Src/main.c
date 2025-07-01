@@ -58,7 +58,7 @@ job_queue_t job_queue;
 osThreadId_t defaultTaskHandle;
 const osThreadAttr_t defaultTask_attributes =
 { .name = "defaultTask", .priority = (osPriority_t) osPriorityNormal,
-		.stack_size = 128 * 8 };
+		.stack_size = 128 * 10 };
 /* USER CODE BEGIN PV */
 
 /* USER CODE END PV */
@@ -520,7 +520,7 @@ int32_t no_os_spi_init(struct no_os_spi_desc **desc,
 
 int32_t no_os_spi_remove(struct no_os_spi_desc *desc)
 {
-
+	return 0;
 }
 
 int32_t no_os_spi_write_and_read(struct no_os_spi_desc *desc, uint8_t *data,
@@ -552,6 +552,8 @@ void no_os_mdelay(uint32_t msecs)
 	osDelay(msecs);
 }
 
+#include <string.h>
+
 /* USER CODE BEGIN Header_StartDefaultTask */
 /**
  * @brief  Function implementing the defaultTask thread.
@@ -562,6 +564,8 @@ void no_os_mdelay(uint32_t msecs)
 void StartDefaultTask(void *argument)
 {
 	struct ad7124_init_param init;
+
+	memset(&init, 0, sizeof(init));
 
 	init.active_device = ID_AD7124_4;
 	init.ref_en = true;
@@ -712,3 +716,13 @@ void assert_failed(uint8_t *file, uint32_t line)
   /* USER CODE END 6 */
 }
 #endif /* USE_FULL_ASSERT */
+
+
+//extern void SystemInit(void);
+//extern uint32_t __interrupt_vector;
+
+void __attribute__((naked)) __section(".init") __attribute__((used)) _start(void)
+{
+	__asm__("b Reset_Handler");
+}
+

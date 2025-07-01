@@ -21,7 +21,7 @@ pub fn build(b: *std.Build) void {
         .optimize = optimize,
     });
 
-    lib.addAssemblyFile(b.path("Startup/startup.s"));
+
 
     lib.addCSourceFiles(.{ .files = &.{
         "Src/main.c",
