@@ -46,9 +46,9 @@ pub fn build(b: *std.Build) void {
     exe.addIncludePath(b.path("Middlewares/Third_Party/CMSIS_6/CMSIS/RTOS2/Include"));
     exe.addIncludePath(b.path("Middlewares/Third_Party/CMSIS-RTX/Include"));
     exe.addIncludePath(b.path("picolibc/include"));
-    
+
     exe.addAssemblyFile(b.path("Core/Startup/startup_stm32g474retx.s"));
-    
+
     exe.addCSourceFiles(.{ .files = &.{
         "Core/Src/stm32g4xx_hal_timebase_tim.c",
         "Core/Src/stm32g4xx_hal_msp.c",
@@ -64,12 +64,12 @@ pub fn build(b: *std.Build) void {
         "-fdata-sections",
     } });
 
+    exe.root_module.addImport("cmsis_rtx", cmsis_rtx_package.module("cmsis_rtx"));
     exe.addObjectFile(core_package.artifact("Core").getEmittedBin());
     exe.addObjectFile(stm32_hal_package.artifact("stm32_hal").getEmittedBin());
     exe.addObjectFile(cmsis_rtx_package.artifact("cmsis_rtx").getEmittedBin());
 
     exe.addObjectFile(b.path("picolibc/libc.a"));
-    // exe.addObjectFile(b.path("picolibc/libcrt0.a"));
 
     exe.setLinkerScript(b.path("STM32G474_picolibc.ld"));
 

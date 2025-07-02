@@ -12,12 +12,7 @@
             "request": "launch",
             "type": "cortex-debug",
             "runToEntryPoint": "main",
-            "servertype": "external",
-            "gdbTarget": "tcp:172.26.176.1:61234",
-            "gdbPath": "gdb-multiarch",
-            "armToolchainPath": "/usr/bin",
-            "overrideRestartCommands": [ "load", "stepi" ],
-            "postRestartCommands": [],
+            "servertype": "stlink",
         }
     ]
 }

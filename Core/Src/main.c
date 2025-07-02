@@ -121,7 +121,7 @@ int main(void)
 	/* USER CODE END 2 */
 
 	/* Init scheduler */
-	osKernelInitialize();
+	//osKernelInitialize();
 
 	/* USER CODE BEGIN RTOS_MUTEX */
 	/* add mutexes, ... */
@@ -141,8 +141,7 @@ int main(void)
 
 	/* Create the thread(s) */
 	/* creation of defaultTask */
-	defaultTaskHandle = osThreadNew(StartDefaultTask, NULL,
-			&defaultTask_attributes);
+	//
 
 	/* USER CODE BEGIN RTOS_THREADS */
 	/* add threads, ... */
@@ -153,19 +152,20 @@ int main(void)
 	/* USER CODE END RTOS_EVENTS */
 
 	/* Start scheduler */
-	osKernelStart();
+	//osKernelStart();
 
 	/* We should never get here as control is now taken by the scheduler */
 
 	/* Infinite loop */
 	/* USER CODE BEGIN WHILE */
-	while (1)
-	{
+	//while (1)
+	//{
 		/* USER CODE END WHILE */
 
 		/* USER CODE BEGIN 3 */
-	}
+	//}
 	/* USER CODE END 3 */
+	return 0;
 }
 
 /**
@@ -717,12 +717,10 @@ void assert_failed(uint8_t *file, uint32_t line)
 }
 #endif /* USE_FULL_ASSERT */
 
-
-//extern void SystemInit(void);
-//extern uint32_t __interrupt_vector;
-
+#if 0
 void __attribute__((naked)) __section(".init") __attribute__((used)) _start(void)
 {
 	__asm__("b Reset_Handler");
 }
 
+#endif

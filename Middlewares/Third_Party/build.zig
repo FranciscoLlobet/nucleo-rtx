@@ -16,6 +16,11 @@ pub fn build(b: *std.Build) void {
 
     const lib = b.addStaticLibrary(.{
         .name = "cmsis_rtx",
+        .target = target,
+        .optimize = optimize,
+    });
+
+    const mod = b.addModule("cmsis_rtx", .{
         .root_source_file = b.path("src/root.zig"),
         .target = target,
         .optimize = optimize,
@@ -54,6 +59,15 @@ pub fn build(b: *std.Build) void {
     lib.addIncludePath(b.path("CMSIS_6/CMSIS/Core/Include"));
     lib.addIncludePath(b.path("CMSIS_6/CMSIS/RTOS2/Include"));
     lib.addIncludePath(b.path("../../picolibc/include"));
+
+    mod.addIncludePath(b.path("CMSIS-RTX/Include"));
+    mod.addIncludePath(b.path("../../Core/Inc/"));
+    mod.addIncludePath(b.path("../../Drivers/CMSIS/Device/ST/STM32G4xx/Include"));
+    mod.addIncludePath(b.path("../../Drivers/stm32_hal/STM32G4xx_HAL_Driver/Inc"));
+    mod.addIncludePath(b.path("CMSIS_6/CMSIS/Core/Include"));
+    mod.addIncludePath(b.path("CMSIS_6/CMSIS/RTOS2/Include"));
+    mod.addIncludePath(b.path("../../picolibc/include"));
+
     //lib.addIncludePath(b.path("../sensors/no-OS/include"));
     //lib.addIncludePath(b.path("../sensors/no-OS/drivers/adc/ad7124"));
     b.installArtifact(lib);
