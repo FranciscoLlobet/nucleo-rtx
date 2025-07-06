@@ -425,8 +425,6 @@ fn osFlagsErrorMap(ef: u32) osError!u32 {
     }
 }
 
-//pub const osFlagsError = c_rtx.osFlagsError;
-
 pub const eventFlags = struct {
     id: osEventFlagsId_t = undefined,
 
@@ -531,6 +529,442 @@ pub fn StaticEventFlags(comptime name: [*:0]const u8) type {
         /// Delete the event flags object
         pub fn delete(self: *const @This()) osError!void {
             return self.ef.delete();
+        }
+    };
+}
+
+pub const osSemaphoreAttr_t = c_rtx.osSemaphoreAttr_t;
+pub const osSemaphoreId_t = c_rtx.osSemaphoreId_t;
+
+pub const osSemaphoreNew = c_rtx.osSemaphoreNew;
+pub const osSemaphoreGetName = c_rtx.osSemaphoreGetName;
+pub const osSemaphoreAcquire = c_rtx.osSemaphoreAcquire;
+pub const osSemaphoreRelease = c_rtx.osSemaphoreRelease;
+pub const osSemaphoreGetCount = c_rtx.osSemaphoreGetCount;
+pub const osSemaphoreDelete = c_rtx.osSemaphoreDelete;
+
+// ===== Semaphore Wrapper Struct =====
+pub const semaphore = struct {
+    id: osSemaphoreId_t = undefined,
+
+    /// Creates a Semaphore object using an existing SemaphoreId reference
+    pub fn create(id: osSemaphoreId_t) @This() {
+        return .{ .id = id };
+    }
+
+    /// Creates a new Semaphore
+    pub fn new(max_count: u32, initial_count: u32, attr: ?*const osSemaphoreAttr_t) @This() {
+        return @This().create(osSemaphoreNew(max_count, initial_count, attr));
+    }
+
+    /// Get semaphore name
+    pub fn getName(self: *const @This()) ?[*:0]const u8 {
+        return osSemaphoreGetName(self.id);
+    }
+
+    /// Acquire a semaphore token or timeout if no tokens are available
+    pub fn acquire(self: *const @This(), timeout: u32) osError!void {
+        return osErrorMap(osSemaphoreAcquire(self.id, timeout));
+    }
+
+    /// Release a semaphore token up to the initial maximum count
+    pub fn release(self: *const @This()) osError!void {
+        return osErrorMap(osSemaphoreRelease(self.id));
+    }
+
+    /// Get current semaphore token count
+    pub fn getCount(self: *const @This()) u32 {
+        return osSemaphoreGetCount(self.id);
+    }
+
+    /// Delete the semaphore
+    pub fn delete(self: *const @This()) osError!void {
+        return osErrorMap(osSemaphoreDelete(self.id));
+    }
+};
+
+// ===== Static Semaphore Generic =====
+/// Static semaphore with compile-time control block allocation
+pub fn StaticSemaphore(comptime name: [*:0]const u8) type {
+    return struct {
+        /// Semaphore object
+        sem: semaphore = undefined,
+
+        /// Control Block, 32-Bit alignment needed
+        cb: c_rtx.osRtxSemaphore_t align(4) = undefined,
+
+        /// Create new static semaphore
+        pub fn new(self: *@This(), max_count: u32, initial_count: u32, attr_bits: u32) osError!void {
+            // Semaphore attributes
+            const attr: c_rtx.osSemaphoreAttr_t = .{
+                .name = name,
+                .attr_bits = attr_bits,
+                .cb_mem = &self.cb,
+                .cb_size = @sizeOf(c_rtx.osRtxSemaphore_t),
+            };
+
+            self.sem = semaphore.new(max_count, initial_count, &attr);
+
+            // Check if semaphore creation failed
+            if (self.sem.id == null) {
+                return osError.osError;
+            }
+        }
+
+        /// Get semaphore reference
+        pub fn getSemaphoreRef(self: *const @This()) *const semaphore {
+            return &self.sem;
+        }
+
+        /// Get semaphore name
+        pub fn getName(self: *const @This()) ?[*:0]const u8 {
+            return self.sem.getName();
+        }
+
+        /// Acquire a semaphore token or timeout if no tokens are available
+        pub fn acquire(self: *const @This(), timeout: u32) osError!void {
+            return self.sem.acquire(timeout);
+        }
+
+        /// Release a semaphore token up to the initial maximum count
+        pub fn release(self: *const @This()) osError!void {
+            return self.sem.release();
+        }
+
+        /// Get current semaphore token count
+        pub fn getCount(self: *const @This()) u32 {
+            return self.sem.getCount();
+        }
+
+        /// Delete the semaphore
+        pub fn delete(self: *const @This()) osError!void {
+            return self.sem.delete();
+        }
+    };
+}
+
+// ===== Mutex C Function Re-exports =====
+pub const osMutexAttr_t = c_rtx.osMutexAttr_t;
+pub const osMutexId_t = c_rtx.osMutexId_t;
+
+pub const osMutexNew = c_rtx.osMutexNew;
+pub const osMutexGetName = c_rtx.osMutexGetName;
+pub const osMutexAcquire = c_rtx.osMutexAcquire;
+pub const osMutexRelease = c_rtx.osMutexRelease;
+pub const osMutexGetOwner = c_rtx.osMutexGetOwner;
+pub const osMutexDelete = c_rtx.osMutexDelete;
+
+/// Mutex attribute bits
+pub const osMutexRecursive = c_rtx.osMutexRecursive;
+pub const osMutexPrioInherit = c_rtx.osMutexPrioInherit;
+pub const osMutexRobust = c_rtx.osMutexRobust;
+
+pub const mutex = struct {
+    id: osMutexId_t = undefined,
+
+    /// Creates a Mutex object using an existing MutexId reference
+    pub fn create(id: osMutexId_t) @This() {
+        return .{ .id = id };
+    }
+
+    /// Creates a new Mutex
+    pub fn new(attr: ?*const osMutexAttr_t) @This() {
+        return @This().create(osMutexNew(attr));
+    }
+
+    /// Get mutex name
+    pub fn getName(self: *const @This()) ?[*:0]const u8 {
+        return osMutexGetName(self.id);
+    }
+
+    /// Acquire a mutex or timeout if it is locked
+    pub fn acquire(self: *const @This(), timeout: u32) osError!void {
+        return osErrorMap(osMutexAcquire(self.id, timeout));
+    }
+
+    /// Release a mutex that was acquired
+    pub fn release(self: *const @This()) osError!void {
+        return osErrorMap(osMutexRelease(self.id));
+    }
+
+    /// Get thread which owns the mutex
+    pub fn getOwner(self: *const @This()) ?osThreadId_t {
+        return osMutexGetOwner(self.id);
+    }
+
+    /// Delete the mutex
+    pub fn delete(self: *const @This()) osError!void {
+        return osErrorMap(osMutexDelete(self.id));
+    }
+};
+
+/// Static mutex with compile-time control block allocation
+pub fn StaticMutex(comptime name: [*:0]const u8) type {
+    return struct {
+        /// Mutex object
+        mtx: mutex = undefined,
+
+        /// Control Block, 32-Bit alignment needed
+        cb: c_rtx.osRtxMutex_t align(4) = undefined,
+
+        /// Create new static mutex
+        pub fn new(self: *@This(), attr_bits: u32) osError!void {
+            // Mutex attributes
+            const attr: c_rtx.osMutexAttr_t = .{
+                .name = name,
+                .attr_bits = attr_bits,
+                .cb_mem = &self.cb,
+                .cb_size = @sizeOf(c_rtx.osRtxMutex_t),
+            };
+
+            self.mtx = mutex.new(&attr);
+
+            // Check if mutex creation failed
+            if (self.mtx.id == null) {
+                return osError.osError;
+            }
+        }
+
+        /// Get mutex reference
+        pub fn getMutexRef(self: *const @This()) *const mutex {
+            return &self.mtx;
+        }
+
+        /// Get mutex name
+        pub fn getName(self: *const @This()) ?[*:0]const u8 {
+            return self.mtx.getName();
+        }
+
+        /// Acquire a mutex or timeout if it is locked
+        pub fn acquire(self: *const @This(), timeout: u32) osError!void {
+            return self.mtx.acquire(timeout);
+        }
+
+        /// Release a mutex that was acquired
+        pub fn release(self: *const @This()) osError!void {
+            return self.mtx.release();
+        }
+
+        /// Get thread which owns the mutex
+        pub fn getOwner(self: *const @This()) ?osThreadId_t {
+            return self.mtx.getOwner();
+        }
+
+        /// Delete the mutex
+        pub fn delete(self: *const @This()) osError!void {
+            return self.mtx.delete();
+        }
+    };
+}
+
+pub const osMessageQueueAttr_t = c_rtx.osMessageQueueAttr_t;
+pub const osMessageQueueId_t = c_rtx.osMessageQueueId_t;
+
+pub const osMessageQueueNew = c_rtx.osMessageQueueNew;
+pub const osMessageQueueGetName = c_rtx.osMessageQueueGetName;
+pub const osMessageQueuePut = c_rtx.osMessageQueuePut;
+pub const osMessageQueueGet = c_rtx.osMessageQueueGet;
+pub const osMessageQueueGetCapacity = c_rtx.osMessageQueueGetCapacity;
+pub const osMessageQueueGetMsgSize = c_rtx.osMessageQueueGetMsgSize;
+pub const osMessageQueueGetCount = c_rtx.osMessageQueueGetCount;
+pub const osMessageQueueGetSpace = c_rtx.osMessageQueueGetSpace;
+pub const osMessageQueueReset = c_rtx.osMessageQueueReset;
+pub const osMessageQueueDelete = c_rtx.osMessageQueueDelete;
+
+pub fn MessageQueue(comptime T: type) type {
+    return struct {
+        id: osMessageQueueId_t = undefined,
+
+        pub const Message = struct {
+            data: T,
+            priority: u32,
+        };
+
+        /// Creates a MessageQueue object using an existing MessageQueueId reference
+        pub fn create(id: osMessageQueueId_t) @This() {
+            return .{ .id = id };
+        }
+
+        /// Creates a new MessageQueue for type T
+        pub fn new(msg_count: u32, attr: ?*const osMessageQueueAttr_t) @This() {
+            return @This().create(osMessageQueueNew(msg_count, @sizeOf(T), attr));
+        }
+
+        /// Get message queue name
+        pub fn getName(self: *const @This()) ?[*:0]const u8 {
+            return osMessageQueueGetName(self.id);
+        }
+
+        /// Put a message into the queue
+        pub fn put(self: *const @This(), msg: *const T, msg_prio: u8, timeout: u32) osError!void {
+            return osErrorMap(osMessageQueuePut(self.id, msg, msg_prio, timeout));
+        }
+
+        /// Get a message from the queue
+        pub fn get(self: *const @This(), msg: *T, msg_prio: ?*u8, timeout: u32) osError!void {
+            return osErrorMap(osMessageQueueGet(self.id, msg, msg_prio, timeout));
+        }
+
+        /// Ger a message from the queue
+        pub fn getMsg(self: *const @This(), timeout: u32) osError!Message {
+            var msg: Message = undefined;
+
+            try self.get(&(msg.data), &(msg.priority), timeout);
+
+            return msg;
+        }
+
+        /// Get maximum number of messages in the queue
+        pub fn getCapacity(self: *const @This()) u32 {
+            return osMessageQueueGetCapacity(self.id);
+        }
+
+        /// Get maximum message size in bytes
+        pub fn getMsgSize(self: *const @This()) u32 {
+            return osMessageQueueGetMsgSize(self.id);
+        }
+
+        /// Get number of queued messages
+        pub fn getCount(self: *const @This()) usize {
+            return @intCast(osMessageQueueGetCount(self.id));
+        }
+
+        /// Get number of available slots for messages
+        pub fn getSpace(self: *const @This()) usize {
+            return @intCast(osMessageQueueGetSpace(self.id));
+        }
+
+        /// Reset the message queue to initial empty state
+        pub fn reset(self: *const @This()) osError!void {
+            return osErrorMap(osMessageQueueReset(self.id));
+        }
+
+        /// Delete the message queue
+        pub fn delete(self: *const @This()) osError!void {
+            return osErrorMap(osMessageQueueDelete(self.id));
+        }
+    };
+}
+
+pub fn StaticMessageQueue(comptime T: type, comptime msg_count: usize, comptime name: [*:0]const u8) type {
+    return struct {
+        /// MessageQueue object
+        mq: MessageQueue(T) = undefined,
+
+        /// Control Block, 32-Bit alignment needed
+        cb: c_rtx.osRtxMessageQueue_t align(4) = undefined,
+
+        /// Static message storage, 32-Bit alignment needed
+        storage: [msg_count * @sizeOf(T)]u8 align(4) = undefined,
+
+        /// Create new static message queue
+        pub fn new(self: *@This(), attr_bits: u32) osError!void {
+            // MessageQueue attributes
+            const attr: c_rtx.osMessageQueueAttr_t = .{
+                .name = name,
+                .attr_bits = attr_bits,
+                .cb_mem = &self.cb,
+                .cb_size = @sizeOf(c_rtx.osRtxMessageQueue_t),
+                .mq_mem = self.storage[0..].ptr,
+                .mq_size = self.storage.len,
+            };
+
+            self.mq = MessageQueue(T).new(msg_count, &attr);
+
+            // Check if message queue creation failed
+            if (self.mq.id == null) {
+                return osError.osError;
+            }
+        }
+
+        /// Get message queue reference
+        pub fn getMessageQueueRef(self: *const @This()) *const MessageQueue(T) {
+            return &self.mq;
+        }
+
+        /// Get message queue name
+        pub fn getName(self: *const @This()) ?[*:0]const u8 {
+            return self.mq.getName();
+        }
+
+        /// Put a message into the queue
+        pub fn put(self: *const @This(), msg: *const T, msg_prio: u8, timeout: u32) osError!void {
+            return self.mq.put(msg, msg_prio, timeout);
+        }
+
+        /// Get a message from the queue (C-style API)
+        pub fn get(self: *const @This(), msg: *T, msg_prio: ?*u8, timeout: u32) osError!void {
+            return self.mq.get(msg, msg_prio, timeout);
+        }
+
+        /// Receive a message from the queue (returns message directly)
+        pub fn receive(self: *const @This(), timeout: u32) osError!T {
+            return self.mq.receive(timeout);
+        }
+
+        /// Receive a message with priority from the queue
+        pub fn receiveWithPriority(self: *const @This(), timeout: u32) osError!MessageQueue(T).Message {
+            return self.mq.receiveWithPriority(timeout);
+        }
+
+        /// Get maximum number of messages in the queue
+        pub fn getCapacity(self: *const @This()) u32 {
+            return self.mq.getCapacity();
+        }
+
+        /// Get maximum message size in bytes
+        pub fn getMsgSize(self: *const @This()) u32 {
+            return self.mq.getMsgSize();
+        }
+
+        /// Get number of queued messages
+        pub fn getCount(self: *const @This()) usize {
+            return self.mq.getCount();
+        }
+
+        /// Get number of available slots for messages
+        pub fn getSpace(self: *const @This()) usize {
+            return self.mq.getSpace();
+        }
+
+        /// Reset the message queue to initial empty state
+        pub fn reset(self: *const @This()) osError!void {
+            return self.mq.reset();
+        }
+
+        /// Delete the message queue
+        pub fn delete(self: *const @This()) osError!void {
+            return self.mq.delete();
+        }
+
+        /// Check if queue is empty
+        pub fn isEmpty(self: *const @This()) bool {
+            return self.mq.isEmpty();
+        }
+
+        /// Check if queue is full
+        pub fn isFull(self: *const @This()) bool {
+            return self.mq.isFull();
+        }
+
+        /// Try to put without blocking (timeout = 0)
+        pub fn tryPut(self: *const @This(), msg: *const T, msg_prio: u8) osError!void {
+            return self.mq.tryPut(msg, msg_prio);
+        }
+
+        /// Try to receive without blocking (returns message directly)
+        pub fn tryReceive(self: *const @This()) osError!T {
+            return self.mq.tryReceive();
+        }
+
+        /// Put with forever timeout
+        pub fn putBlocking(self: *const @This(), msg: *const T, msg_prio: u8) osError!void {
+            return self.mq.putBlocking(msg, msg_prio);
+        }
+
+        /// Receive with forever timeout (returns message directly)
+        pub fn receiveBlocking(self: *const @This()) osError!T {
+            return self.mq.receiveBlocking();
         }
     };
 }

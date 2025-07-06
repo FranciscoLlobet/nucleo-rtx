@@ -6,19 +6,46 @@ const rtx = @import("cmsis_rtx");
 
 extern fn main() callconv(.C) c_int;
 
-fn threadRunner(arg: ?*anyopaque) void {
-    _ = arg;
-    while (true) {}
-}
+var jobQueueTask: struct {
+    thread: rtx.StaticThread(@This(), 8 * 128, "Test Queue", threadRunner) = undefined,
+    timer: rtx.StaticTimer(@This(), "Job Queue Timer", timerFn),
+    event: rtx.StaticEventFlags("Event"),
 
-var thread: rtx.StaticThread(anyopaque, 8 * 128, "Test Thread", threadRunner) = undefined;
+    fn new(self: *@This()) !void {
+        try self.thread.new(self, 0, .osPriorityNormal);
+        try self.timer.new(.osTimerPeriodic, self, 0);
+        try self.event.new(0);
+    }
+
+    fn threadRunner(arg: ?*@This()) void {
+        arg.?.timer.start(1000) catch {};
+
+        while (true) {
+            if (arg.?.event.wait(0xFF, .osFlagsWaitAny, 500)) |val| {
+                _ = val;
+                //
+            } else |err| {
+                if (err == rtx.osError.osError) {
+                    //
+                } else if (err == rtx.osError.osErrorTimeout) {
+                    //
+                } else {}
+                //
+            }
+        }
+    }
+
+    fn timerFn(arg: ?*@This()) void {
+        _ = arg.?.event.set(0x1);
+    }
+} = undefined;
 
 export fn zmain() noreturn {
     _ = main();
 
     rtx.kernel.initialize() catch {};
 
-    thread.new(null, 0, 24) catch {};
+    jobQueueTask.new() catch {};
 
     rtx.kernel.start() catch {};
 
