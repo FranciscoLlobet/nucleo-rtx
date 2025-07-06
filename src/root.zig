@@ -17,7 +17,7 @@ var jobQueueTask: struct {
     thread: rtx.StaticThread(@This(), 8 * 128, "jobRunner", jobRunner),
     queue: rtx.StaticMessageQueue(job_queue_element, 5, "jobQueue"),
 
-    fn new(self: *@This(), priority: rtx.osThreadPriority) !void {
+    fn new(self: *@This(), priority: rtx.thread.osThreadPriority) !void {
         try self.thread.new(self, 0, priority);
         try self.queue.new(0);
     }
