@@ -1,12 +1,24 @@
+// Copyright 2025 Francisco Llobet-Blandino
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//    http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 const core = @import("core.zig");
 const c_rtx = core.c_rtx;
-const eventFlags = @import("eventFlags.zig");
 
 pub const osError = core.osError;
-pub const osFlagsError = eventFlags.osFlagsError;
+pub const osFlagsError = core.osFlagsError;
 
 const osErrorMap = core.osErrorMap;
-const osFlagsErrorMap = eventFlags.osFlagsErrorMap;
+const osFlagsErrorMap = core.osFlagsErrorMap;
 
 pub const osThreadId_t = c_rtx.osThreadId_t;
 pub const osThreadFunc_t = c_rtx.osThreadFunc_t;
@@ -96,12 +108,12 @@ const thread = @This();
 id: osThreadId_t = undefined,
 
 /// Creates a Thread object using an existing ThreadId reference
-pub fn create(id: osThreadId_t) @This() {
-    return .{ .id = id };
+pub fn create(id: osThreadId_t) !@This() {
+    return if (id == null) osError.osError else .{ .id = id };
 }
 
 /// Creates a new Thread
-pub fn new(func: osThreadFunc_t, argument: ?*anyopaque, attr: *const osThreadAttr_t) @This() {
+pub fn new(func: osThreadFunc_t, argument: ?*anyopaque, attr: *const osThreadAttr_t) !@This() {
     return @This().create(osThreadNew(func, argument, attr));
 }
 
@@ -176,7 +188,7 @@ pub fn StaticThread(comptime T: type, comptime stack_size: usize, comptime name:
                 .affinity_mask = 0,
             };
 
-            self.thread = thread.new(run, @ptrCast(@alignCast(arg)), &attr);
+            self.thread = try thread.new(run, @ptrCast(@alignCast(arg)), &attr);
         }
 
         pub fn getThreadRef(self: *const @This()) *thread {
