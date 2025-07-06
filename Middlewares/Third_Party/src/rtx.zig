@@ -276,7 +276,7 @@ pub const thread = struct {
     }
 
     pub fn flagsWait(self: *const @This(), options: osFlagsOptions, timeout: u32) osError!u32 {
-        return osFlagsErrorMap(osThreadFlagsWait(self.id, options, timeout));
+        return osFlagsErrorMap(osThreadFlagsWait(self.id, @intFromEnum(options), timeout));
     }
 };
 
@@ -543,7 +543,6 @@ pub const osSemaphoreRelease = c_rtx.osSemaphoreRelease;
 pub const osSemaphoreGetCount = c_rtx.osSemaphoreGetCount;
 pub const osSemaphoreDelete = c_rtx.osSemaphoreDelete;
 
-// ===== Semaphore Wrapper Struct =====
 pub const semaphore = struct {
     id: osSemaphoreId_t = undefined,
 
@@ -583,7 +582,6 @@ pub const semaphore = struct {
     }
 };
 
-// ===== Static Semaphore Generic =====
 /// Static semaphore with compile-time control block allocation
 pub fn StaticSemaphore(comptime name: [*:0]const u8) type {
     return struct {
@@ -643,7 +641,6 @@ pub fn StaticSemaphore(comptime name: [*:0]const u8) type {
     };
 }
 
-// ===== Mutex C Function Re-exports =====
 pub const osMutexAttr_t = c_rtx.osMutexAttr_t;
 pub const osMutexId_t = c_rtx.osMutexId_t;
 
@@ -777,7 +774,7 @@ pub fn MessageQueue(comptime T: type) type {
 
         pub const Message = struct {
             data: T,
-            priority: u32,
+            priority: u8,
         };
 
         /// Creates a MessageQueue object using an existing MessageQueueId reference
@@ -846,6 +843,10 @@ pub fn MessageQueue(comptime T: type) type {
     };
 }
 
+fn messageQueueMemSize(comptime msg_count: usize, comptime msg_size: usize) usize {
+    return @intCast((4 * @as(u32, @intCast(msg_count))) * (3 + ((@as(u32, @intCast(msg_size)) + 3) / 4)));
+}
+
 pub fn StaticMessageQueue(comptime T: type, comptime msg_count: usize, comptime name: [*:0]const u8) type {
     return struct {
         /// MessageQueue object
@@ -855,7 +856,7 @@ pub fn StaticMessageQueue(comptime T: type, comptime msg_count: usize, comptime 
         cb: c_rtx.osRtxMessageQueue_t align(4) = undefined,
 
         /// Static message storage, 32-Bit alignment needed
-        storage: [msg_count * @sizeOf(T)]u8 align(4) = undefined,
+        storage: [messageQueueMemSize(msg_count, @sizeOf(T))]u8 align(4) = undefined,
 
         /// Create new static message queue
         pub fn new(self: *@This(), attr_bits: u32) osError!void {
@@ -897,14 +898,13 @@ pub fn StaticMessageQueue(comptime T: type, comptime msg_count: usize, comptime 
             return self.mq.get(msg, msg_prio, timeout);
         }
 
-        /// Receive a message from the queue (returns message directly)
-        pub fn receive(self: *const @This(), timeout: u32) osError!T {
-            return self.mq.receive(timeout);
-        }
+        /// Ger a message from the queue
+        pub fn getMsg(self: *const @This(), timeout: u32) osError!MessageQueue(T).Message {
+            var msg: MessageQueue(T).Message = undefined;
 
-        /// Receive a message with priority from the queue
-        pub fn receiveWithPriority(self: *const @This(), timeout: u32) osError!MessageQueue(T).Message {
-            return self.mq.receiveWithPriority(timeout);
+            try self.get(&(msg.data), &(msg.priority), timeout);
+
+            return msg;
         }
 
         /// Get maximum number of messages in the queue
@@ -935,36 +935,6 @@ pub fn StaticMessageQueue(comptime T: type, comptime msg_count: usize, comptime 
         /// Delete the message queue
         pub fn delete(self: *const @This()) osError!void {
             return self.mq.delete();
-        }
-
-        /// Check if queue is empty
-        pub fn isEmpty(self: *const @This()) bool {
-            return self.mq.isEmpty();
-        }
-
-        /// Check if queue is full
-        pub fn isFull(self: *const @This()) bool {
-            return self.mq.isFull();
-        }
-
-        /// Try to put without blocking (timeout = 0)
-        pub fn tryPut(self: *const @This(), msg: *const T, msg_prio: u8) osError!void {
-            return self.mq.tryPut(msg, msg_prio);
-        }
-
-        /// Try to receive without blocking (returns message directly)
-        pub fn tryReceive(self: *const @This()) osError!T {
-            return self.mq.tryReceive();
-        }
-
-        /// Put with forever timeout
-        pub fn putBlocking(self: *const @This(), msg: *const T, msg_prio: u8) osError!void {
-            return self.mq.putBlocking(msg, msg_prio);
-        }
-
-        /// Receive with forever timeout (returns message directly)
-        pub fn receiveBlocking(self: *const @This()) osError!T {
-            return self.mq.receiveBlocking();
         }
     };
 }
