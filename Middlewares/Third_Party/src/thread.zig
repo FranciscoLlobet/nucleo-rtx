@@ -1,11 +1,12 @@
-const c_rtx = @import("c.zig").c_rtx;
 const core = @import("core.zig");
+const c_rtx = core.c_rtx;
 const eventFlags = @import("eventFlags.zig");
 
 pub const osError = core.osError;
-pub const osErrorMap = core.osErrorMap;
 pub const osFlagsError = eventFlags.osFlagsError;
-pub const osFlagsErrorMap = eventFlags.osFlagsErrorMap;
+
+const osErrorMap = core.osErrorMap;
+const osFlagsErrorMap = eventFlags.osFlagsErrorMap;
 
 pub const osThreadId_t = c_rtx.osThreadId_t;
 pub const osThreadFunc_t = c_rtx.osThreadFunc_t;

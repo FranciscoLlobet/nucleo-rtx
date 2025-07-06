@@ -14,22 +14,14 @@ pub const StaticThread = thread.StaticThread;
 pub const StaticTimer = timer.StaticTimer;
 pub const StaticMutex = mutex.StaticMutex;
 
-pub const osThreadId_t = thread.osThreadId_t;
-
-pub const osError = core.osError;
-
 const osErrorMap = core.osErrorMap;
-
-pub const osFlagsError = eventFlags.osFlagsError;
-
 const osFlagsErrorMap = eventFlags.osFlagsErrorMap;
 
+pub const osFlagsError = eventFlags.osFlagsError;
+pub const osThreadId_t = thread.osThreadId_t;
+pub const osError = core.osError;
 pub const osStatus_t = core.osStatus_t;
-
 pub const osWaitForever: u32 = @intCast(c_rtx.osWaitForever);
-
-pub const osKernelInitialize = c_rtx.osKernelInitialize;
-pub const osKernelStart = c_rtx.osKernelStart;
 
 pub fn osDelay(ticks: u32) osError!void {
     return osErrorMap(c_rtx.osDelay(ticks));

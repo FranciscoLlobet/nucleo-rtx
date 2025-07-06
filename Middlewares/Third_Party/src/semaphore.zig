@@ -1,18 +1,12 @@
-const c_rtx = @import("c.zig").c_rtx;
 const core = @import("core.zig");
+const c_rtx = core.c_rtx;
 
 pub const osError = core.osError;
 const osErrorMap = core.osErrorMap;
 
 pub const osSemaphoreAttr_t = c_rtx.osSemaphoreAttr_t;
 pub const osSemaphoreId_t = c_rtx.osSemaphoreId_t;
-
-pub const osSemaphoreNew = c_rtx.osSemaphoreNew;
-pub const osSemaphoreGetName = c_rtx.osSemaphoreGetName;
-pub const osSemaphoreAcquire = c_rtx.osSemaphoreAcquire;
-pub const osSemaphoreRelease = c_rtx.osSemaphoreRelease;
-pub const osSemaphoreGetCount = c_rtx.osSemaphoreGetCount;
-pub const osSemaphoreDelete = c_rtx.osSemaphoreDelete;
+pub const osRtxSemaphore_t = c_rtx.osRtxSemaphore_t;
 
 const semaphore = @This();
 
@@ -30,27 +24,27 @@ pub fn new(max_count: u32, initial_count: u32, attr: ?*const osSemaphoreAttr_t) 
 
 /// Get semaphore name
 pub fn getName(self: *const @This()) ?[*:0]const u8 {
-    return osSemaphoreGetName(self.id);
+    return c_rtx.osSemaphoreGetName(self.id);
 }
 
 /// Acquire a semaphore token or timeout if no tokens are available
 pub fn acquire(self: *const @This(), timeout: u32) osError!void {
-    return osErrorMap(osSemaphoreAcquire(self.id, timeout));
+    return osErrorMap(c_rtx.osSemaphoreAcquire(self.id, timeout));
 }
 
 /// Release a semaphore token up to the initial maximum count
 pub fn release(self: *const @This()) osError!void {
-    return osErrorMap(osSemaphoreRelease(self.id));
+    return osErrorMap(c_rtx.osSemaphoreRelease(self.id));
 }
 
 /// Get current semaphore token count
 pub fn getCount(self: *const @This()) u32 {
-    return osSemaphoreGetCount(self.id);
+    return c_rtx.osSemaphoreGetCount(self.id);
 }
 
 /// Delete the semaphore
 pub fn delete(self: *const @This()) osError!void {
-    return osErrorMap(osSemaphoreDelete(self.id));
+    return osErrorMap(c_rtx.osSemaphoreDelete(self.id));
 }
 
 /// Static semaphore with compile-time control block allocation
@@ -60,7 +54,7 @@ pub fn StaticSemaphore(comptime name: [*:0]const u8) type {
         sem: semaphore = undefined,
 
         /// Control Block, 32-Bit alignment needed
-        cb: c_rtx.osRtxSemaphore_t align(4) = undefined,
+        cb: osRtxSemaphore_t align(4) = undefined,
 
         /// Create new static semaphore
         pub fn new(self: *@This(), max_count: u32, initial_count: u32, attr_bits: u32) osError!void {
@@ -69,7 +63,7 @@ pub fn StaticSemaphore(comptime name: [*:0]const u8) type {
                 .name = name,
                 .attr_bits = attr_bits,
                 .cb_mem = &self.cb,
-                .cb_size = @sizeOf(c_rtx.osRtxSemaphore_t),
+                .cb_size = @sizeOf(osRtxSemaphore_t),
             };
 
             self.sem = semaphore.new(max_count, initial_count, &attr);

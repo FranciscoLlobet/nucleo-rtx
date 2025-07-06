@@ -1,94 +1,65 @@
 const c_rtx = @import("c.zig").c_rtx;
 const core = @import("core.zig");
 
-const osStatus_t = core.osStatus_t;
-
+// Import shared types and functions
 pub const osError = core.osError;
-pub const osErrorMap = core.osErrorMap;
+pub const osFlagsError = core.osFlagsError;
+const osErrorMap = core.osErrorMap;
+const osFlagsErrorMap = core.osFlagsErrorMap;
 
+// Local constants
 pub const osFlagsWaitAny = c_rtx.osFlagsWaitAny;
 pub const osFlagsWaitAll = c_rtx.osFlagsWaitAll;
 pub const osFlagsNoClear = c_rtx.osFlagsNoClear;
 
+// Types
 pub const osEventFlagsAttr_t = c_rtx.osEventFlagsAttr_t;
 pub const osEventFlagsId_t = c_rtx.osEventFlagsId_t;
+pub const osRtxEventFlags_t = c_rtx.osRtxEventFlags_t;
 
-pub const osEventFlagsNew = c_rtx.osEventFlagsNew;
-pub const osEventFlagsGetName = c_rtx.osEventFlagsGetName;
-pub const osEventFlagsSet = c_rtx.osEventFlagsSet;
-pub const osEventFlagsClear = c_rtx.osEventFlagsClear;
-pub const osEventFlagsGet = c_rtx.osEventFlagsGet;
-pub const osEventFlagsWait = c_rtx.osEventFlagsWait;
-pub const osEventFlagsDelete = c_rtx.osEventFlagsDelete;
+const eventFlags = @This();
 
-pub const osFlagsError = error{
-    osFlagsErrorUnknown,
-    osFlagsErrorTimeout,
-    osFlagsErrorResource,
-    osFlagsErrorParameter,
-    osFlagsErrorISR,
-    osFlagsErrorSafetyClass,
-};
+id: osEventFlagsId_t = undefined,
 
-fn osFlagsErrorMap(ef: u32) osFlagsError!u32 {
-    if (@as(u32, @intCast(c_rtx.osFlagsError & ef)) == @as(u32, @intCast(c_rtx.osFlagsError))) {
-        return switch (ef) {
-            c_rtx.osFlagsErrorUnknown => osFlagsError.osFlagsErrorUnknown,
-            c_rtx.osFlagsErrorTimeout => osFlagsError.osFlagsErrorTimeout,
-            c_rtx.osFlagsErrorResource => osFlagsError.osFlagsErrorResource,
-            c_rtx.osFlagsErrorParameter => osFlagsError.osFlagsErrorParameter,
-            c_rtx.osFlagsErrorISR => osFlagsError.osFlagsErrorISR,
-            c_rtx.osFlagsErrorSafetyClass => osFlagsError.osFlagsErrorSafetyClass,
-            else => osFlagsError.osFlagsErrorUnknown,
-        };
-    } else {
-        return ef;
-    }
+/// Creates an EventFlags object using an existing EventFlagsId reference
+pub fn create(id: osEventFlagsId_t) @This() {
+    return .{ .id = id };
 }
 
-pub const eventFlags = struct {
-    id: osEventFlagsId_t = undefined,
+/// Creates a new EventFlags object
+pub fn new(attr: ?*const osEventFlagsAttr_t) @This() {
+    return @This().create(c_rtx.osEventFlagsNew(attr));
+}
 
-    /// Creates an EventFlags object using an existing EventFlagsId reference
-    pub fn create(id: osEventFlagsId_t) @This() {
-        return .{ .id = id };
-    }
+/// Get event flags name
+pub fn getName(self: *const @This()) ?[*:0]const u8 {
+    return c_rtx.osEventFlagsGetName(self.id);
+}
 
-    /// Creates a new EventFlags object
-    pub fn new(attr: ?*const osEventFlagsAttr_t) @This() {
-        return @This().create(osEventFlagsNew(attr));
-    }
+/// Set specified event flags
+pub fn set(self: *const @This(), flags: u32) osFlagsError!u32 {
+    return osFlagsErrorMap(c_rtx.osEventFlagsSet(self.id, flags));
+}
 
-    /// Get event flags name
-    pub fn getName(self: *const @This()) ?[*:0]const u8 {
-        return osEventFlagsGetName(self.id);
-    }
+/// Clear specified event flags
+pub fn clear(self: *const @This(), flags: u32) osFlagsError!u32 {
+    return osFlagsErrorMap(c_rtx.osEventFlagsClear(self.id, flags));
+}
 
-    /// Set specified event flags
-    pub fn set(self: *const @This(), flags: u32) osFlagsError!u32 {
-        return osFlagsErrorMap(osEventFlagsSet(self.id, flags));
-    }
+/// Get current event flags
+pub fn get(self: *const @This()) osFlagsError!u32 {
+    return osFlagsErrorMap(c_rtx.osEventFlagsGet(self.id));
+}
 
-    /// Clear specified event flags
-    pub fn clear(self: *const @This(), flags: u32) osFlagsError!u32 {
-        return osFlagsErrorMap(osEventFlagsClear(self.id, flags));
-    }
+/// Wait for one or more event flags to become signaled
+pub fn wait(self: *const @This(), flags: u32, options: u32, timeout: u32) osFlagsError!u32 {
+    return osFlagsErrorMap(c_rtx.osEventFlagsWait(self.id, flags, options, timeout));
+}
 
-    /// Get current event flags
-    pub fn get(self: *const @This()) osFlagsError!u32 {
-        return osFlagsErrorMap(osEventFlagsGet(self.id));
-    }
-
-    /// Wait for one or more event flags to become signaled
-    pub fn wait(self: *const @This(), flags: u32, options: u32, timeout: u32) osFlagsError!u32 {
-        return osFlagsErrorMap(osEventFlagsWait(self.id, flags, options, timeout));
-    }
-
-    /// Delete the event flags object
-    pub fn delete(self: *const @This()) osError!void {
-        return osErrorMap(osEventFlagsDelete(self.id));
-    }
-};
+/// Delete the event flags object
+pub fn delete(self: *const @This()) osError!void {
+    return osErrorMap(c_rtx.osEventFlagsDelete(self.id));
+}
 
 /// Static event flags with compile-time control block allocation
 pub fn StaticEventFlags(comptime name: [*:0]const u8) type {
@@ -97,7 +68,7 @@ pub fn StaticEventFlags(comptime name: [*:0]const u8) type {
         ef: eventFlags = undefined,
 
         /// Control Block, 32-Bit alignment needed
-        cb: c_rtx.osRtxEventFlags_t align(4) = undefined,
+        cb: osRtxEventFlags_t align(4) = undefined,
 
         /// Create new static event flags
         pub fn new(self: *@This(), attr_bits: u32) osError!void {
@@ -106,7 +77,7 @@ pub fn StaticEventFlags(comptime name: [*:0]const u8) type {
                 .name = name,
                 .attr_bits = attr_bits,
                 .cb_mem = &self.cb,
-                .cb_size = @sizeOf(c_rtx.osRtxEventFlags_t),
+                .cb_size = @sizeOf(osRtxEventFlags_t),
             };
 
             self.ef = eventFlags.new(&attr);
