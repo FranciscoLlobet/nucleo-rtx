@@ -82,7 +82,5 @@ pub fn build(b: *std.Build) void {
     mod.addIncludePath(b.path("../../Drivers/stm32_hal/STM32G4xx_HAL_Driver/Inc"));
     mod.addIncludePath(b.path("../../picolibc/include"));
 
-    //lib.installHeader(source: LazyPath, dest_rel_path: []const u8)
-
     b.installArtifact(lib);
 }
