@@ -16,26 +16,40 @@
 // AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
 // WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-const std = @import("std");
 const core = @import("core.zig");
 const c_rtx = core.c_rtx;
 
-pub const kernel = @import("kernel.zig");
-pub const delay = @import("delay.zig");
-pub const eventFlags = @import("eventFlags.zig");
-pub const thread = @import("thread.zig");
-pub const timer = @import("timer.zig");
-pub const mutex = @import("mutex.zig");
-pub const semaphore = @import("semaphore.zig");
+pub const osError = core.osError;
 
-pub const StaticThread = thread.StaticThread;
-pub const StaticTimer = timer.StaticTimer;
-pub const StaticMutex = mutex.StaticMutex;
-pub const StaticSemaphore = semaphore.StaticSemaphore;
-pub const MessageQueue = @import("messageQueue.zig").MessageQueue;
-pub const StaticMessageQueue = @import("messageQueue.zig").StaticMessageQueue;
+const osErrorMap = core.osErrorMap;
 
-pub const osWaitForever: u32 = @intCast(c_rtx.osWaitForever);
+const kernel = @This();
 
-pub const osDelay = delay.osDelay;
-pub const osDelayUntil = delay.osDelayUntil;
+pub const osKernelState = enum(i32) {
+    osKernelInactive = c_rtx.osKernelInactive,
+    osKernelReady = c_rtx.osKernelReady,
+    osKernelRunning = c_rtx.osKernelRunning,
+    osKernelLocked = c_rtx.osKernelLocked,
+    osKernelSuspended = c_rtx.osKernelSuspended,
+    osKernelError = c_rtx.osKernelError,
+};
+
+pub fn initialize() osError!void {
+    return osErrorMap(c_rtx.osKernelInitialize());
+}
+
+pub fn start() osError!void {
+    return osErrorMap(c_rtx.osKernelStart());
+}
+
+pub fn getState() osKernelState {
+    return @enumFromInt(c_rtx.osKernelGetState());
+}
+
+pub fn getTickCount() u32 {
+    return c_rtx.osKernelGetTickCount();
+}
+
+pub fn getSysTimerFreq() u32 {
+    return c_rtx.osKernelGetSysTimerFreq();
+}

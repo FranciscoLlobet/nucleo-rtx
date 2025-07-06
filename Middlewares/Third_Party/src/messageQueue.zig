@@ -1,3 +1,21 @@
+// Copyright (c) 2025 Francisco Llobet-Blandino.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the “Software”), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in all
+// copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+// WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 const c_rtx = @import("c.zig").c_rtx;
 const core = @import("core.zig");
 
@@ -6,17 +24,6 @@ const osErrorMap = core.osErrorMap;
 
 pub const osMessageQueueAttr_t = c_rtx.osMessageQueueAttr_t;
 pub const osMessageQueueId_t = c_rtx.osMessageQueueId_t;
-
-pub const osMessageQueueNew = c_rtx.osMessageQueueNew;
-pub const osMessageQueueGetName = c_rtx.osMessageQueueGetName;
-pub const osMessageQueuePut = c_rtx.osMessageQueuePut;
-pub const osMessageQueueGet = c_rtx.osMessageQueueGet;
-pub const osMessageQueueGetCapacity = c_rtx.osMessageQueueGetCapacity;
-pub const osMessageQueueGetMsgSize = c_rtx.osMessageQueueGetMsgSize;
-pub const osMessageQueueGetCount = c_rtx.osMessageQueueGetCount;
-pub const osMessageQueueGetSpace = c_rtx.osMessageQueueGetSpace;
-pub const osMessageQueueReset = c_rtx.osMessageQueueReset;
-pub const osMessageQueueDelete = c_rtx.osMessageQueueDelete;
 
 fn messageQueueMemSize(comptime msg_count: usize, comptime msg_size: usize) usize {
     return @intCast((4 * @as(u32, @intCast(msg_count))) * (3 + ((@as(u32, @intCast(msg_size)) + 3) / 4)));
@@ -38,22 +45,22 @@ pub fn MessageQueue(comptime T: type) type {
 
         /// Creates a new MessageQueue for type T
         pub fn new(msg_count: u32, attr: ?*const osMessageQueueAttr_t) @This() {
-            return @This().create(osMessageQueueNew(msg_count, @sizeOf(T), attr));
+            return @This().create(c_rtx.osMessageQueueNew(msg_count, @sizeOf(T), attr));
         }
 
         /// Get message queue name
         pub fn getName(self: *const @This()) ?[*:0]const u8 {
-            return osMessageQueueGetName(self.id);
+            return c_rtx.osMessageQueueGetName(self.id);
         }
 
         /// Put a message into the queue
         pub fn put(self: *const @This(), msg: *const T, msg_prio: u8, timeout: u32) osError!void {
-            return osErrorMap(osMessageQueuePut(self.id, msg, msg_prio, timeout));
+            return osErrorMap(c_rtx.osMessageQueuePut(self.id, msg, msg_prio, timeout));
         }
 
         /// Get a message from the queue
         pub fn get(self: *const @This(), msg: *T, msg_prio: ?*u8, timeout: u32) osError!void {
-            return osErrorMap(osMessageQueueGet(self.id, msg, msg_prio, timeout));
+            return osErrorMap(c_rtx.osMessageQueueGet(self.id, msg, msg_prio, timeout));
         }
 
         /// Ger a message from the queue
@@ -67,32 +74,32 @@ pub fn MessageQueue(comptime T: type) type {
 
         /// Get maximum number of messages in the queue
         pub fn getCapacity(self: *const @This()) u32 {
-            return osMessageQueueGetCapacity(self.id);
+            return c_rtx.osMessageQueueGetCapacity(self.id);
         }
 
         /// Get maximum message size in bytes
         pub fn getMsgSize(self: *const @This()) u32 {
-            return osMessageQueueGetMsgSize(self.id);
+            return c_rtx.osMessageQueueGetMsgSize(self.id);
         }
 
         /// Get number of queued messages
         pub fn getCount(self: *const @This()) usize {
-            return @intCast(osMessageQueueGetCount(self.id));
+            return @intCast(c_rtx.osMessageQueueGetCount(self.id));
         }
 
         /// Get number of available slots for messages
         pub fn getSpace(self: *const @This()) usize {
-            return @intCast(osMessageQueueGetSpace(self.id));
+            return @intCast(c_rtx.osMessageQueueGetSpace(self.id));
         }
 
         /// Reset the message queue to initial empty state
         pub fn reset(self: *const @This()) osError!void {
-            return osErrorMap(osMessageQueueReset(self.id));
+            return osErrorMap(c_rtx.osMessageQueueReset(self.id));
         }
 
         /// Delete the message queue
         pub fn delete(self: *const @This()) osError!void {
-            return osErrorMap(osMessageQueueDelete(self.id));
+            return osErrorMap(c_rtx.osMessageQueueDelete(self.id));
         }
     };
 }

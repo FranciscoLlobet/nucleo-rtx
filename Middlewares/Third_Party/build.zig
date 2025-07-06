@@ -1,3 +1,21 @@
+// Copyright (c) 2025 Francisco Llobet-Blandino.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the “Software”), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in all
+// copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+// WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 const std = @import("std");
 
 // Although this function looks imperative, note that its job is to
@@ -5,12 +23,6 @@ const std = @import("std");
 // runner.
 pub fn build(b: *std.Build) void {
     const target = b.standardTargetOptions(.{});
-    //const target = b.resolveTargetQuery(.{
-    //    .cpu_arch = .thumb,
-    //    .os_tag = .freestanding,
-    //    .abi = .eabi,
-    //    .cpu_model = .{ .explicit = &std.Target.arm.cpu.cortex_m4 },
-    //});
 
     const optimize = b.standardOptimizeOption(.{});
 
@@ -75,7 +87,7 @@ pub fn build(b: *std.Build) void {
     mod.addIncludePath(b.path("../../Drivers/stm32_hal/STM32G4xx_HAL_Driver/Inc"));
     mod.addIncludePath(b.path("../../picolibc/include"));
 
-    //lib.addIncludePath(b.path("../sensors/no-OS/include"));
-    //lib.addIncludePath(b.path("../sensors/no-OS/drivers/adc/ad7124"));
+    //lib.installHeader(source: LazyPath, dest_rel_path: []const u8)
+
     b.installArtifact(lib);
 }

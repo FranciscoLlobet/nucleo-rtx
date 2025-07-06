@@ -16,26 +16,16 @@
 // AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
 // WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-const std = @import("std");
 const core = @import("core.zig");
 const c_rtx = core.c_rtx;
 
-pub const kernel = @import("kernel.zig");
-pub const delay = @import("delay.zig");
-pub const eventFlags = @import("eventFlags.zig");
-pub const thread = @import("thread.zig");
-pub const timer = @import("timer.zig");
-pub const mutex = @import("mutex.zig");
-pub const semaphore = @import("semaphore.zig");
+pub const osError = core.osError;
+const osErrorMap = core.osErrorMap;
 
-pub const StaticThread = thread.StaticThread;
-pub const StaticTimer = timer.StaticTimer;
-pub const StaticMutex = mutex.StaticMutex;
-pub const StaticSemaphore = semaphore.StaticSemaphore;
-pub const MessageQueue = @import("messageQueue.zig").MessageQueue;
-pub const StaticMessageQueue = @import("messageQueue.zig").StaticMessageQueue;
+pub fn osDelay(ticks: u32) osError!void {
+    return osErrorMap(c_rtx.osDelay(ticks));
+}
 
-pub const osWaitForever: u32 = @intCast(c_rtx.osWaitForever);
-
-pub const osDelay = delay.osDelay;
-pub const osDelayUntil = delay.osDelayUntil;
+pub fn osDelayUntil(ticks: u32) osError!void {
+    return osErrorMap(c_rtx.osDelayUntil(ticks));
+}
