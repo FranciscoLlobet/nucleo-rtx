@@ -17,7 +17,6 @@ pub const osError = error{
 };
 
 pub const osFlagsError = error{
-    osFlagsError,
     osFlagsErrorUnknown,
     osFlagsErrorTimeout,
     osFlagsErrorResource,
@@ -26,11 +25,9 @@ pub const osFlagsError = error{
     osFlagsErrorSafetyClass,
 };
 
-pub const osFlagsOptions = enum(u32) {
-    osFlagsWaitAny = c_rtx.osFlagsWaitAny,
-    osFlagsWaitAll = c_rtx.osFlagsWaitAll,
-    osFlagsNoClear = c_rtx.osFlagsNoClear,
-};
+pub const osFlagsWaitAny = c_rtx.osFlagsWaitAny;
+pub const osFlagsWaitAll = c_rtx.osFlagsWaitAll;
+pub const osFlagsNoClear = c_rtx.osFlagsNoClear;
 
 fn osErrorMap(osStatus: osStatus_t) osError!void {
     return switch (osStatus) {
@@ -54,9 +51,6 @@ pub const osThreadId_t = c_rtx.osThreadId_t;
 pub const osKernelInitialize = c_rtx.osKernelInitialize;
 pub const osKernelStart = c_rtx.osKernelStart;
 
-pub const osDelay = c_rtx.osDelay;
-pub const osDelayUntil = c_rtx.osDelayUntil;
-
 pub const osThreadNew = c_rtx.osThreadNew;
 pub const osThreadGetState = c_rtx.osThreadGetState;
 pub const osThreadGetId = c_rtx.osThreadGetId;
@@ -71,8 +65,16 @@ pub const osThreadFlagsGet = c_rtx.osThreadFlagsGet;
 pub const osThreadFlagsClear = c_rtx.osThreadFlagsClear;
 pub const osThreadFlagsWait = c_rtx.osThreadFlagsWait;
 
+pub fn osDelay(ticks: u32) osError!void {
+    return osErrorMap(c_rtx.osDelay(ticks));
+}
+
+pub fn osDelayUntil(ticks: u32) osError!void {
+    return osErrorMap(c_rtx.osDelayUntil(ticks));
+}
+
 pub const kernel = struct {
-    pub const State = enum(i32) {
+    pub const osKernelState = enum(i32) {
         osKernelInactive = c_rtx.osKernelInactive,
         osKernelReady = c_rtx.osKernelReady,
         osKernelRunning = c_rtx.osKernelRunning,
@@ -87,6 +89,18 @@ pub const kernel = struct {
 
     pub fn start() osError!void {
         return osErrorMap(c_rtx.osKernelStart());
+    }
+
+    pub fn getState() osKernelState {
+        return @enumFromInt(c_rtx.osKernelGetState());
+    }
+
+    pub fn getTickCount() u32 {
+        return c_rtx.osKernelGetTickCount();
+    }
+
+    pub fn getSysTimerFreq() u32 {
+        return c_rtx.osKernelGetSysTimerFreq();
     }
 };
 
@@ -181,7 +195,7 @@ pub fn StaticThread(comptime T: type, comptime stack_size: usize, comptime name:
                 .cb_mem = &self.cb,
                 .cb_size = @sizeOf(c_rtx.osRtxThread_t),
                 .stack_mem = self.stack[0..].ptr,
-                .stack_size = self.stack[0..].len * @sizeOf(u8),
+                .stack_size = self.stack[0..].len,
                 .priority = @intFromEnum(priority),
                 .tz_module = undefined,
                 .affinity_mask = 0,
@@ -211,17 +225,17 @@ pub fn StaticThread(comptime T: type, comptime stack_size: usize, comptime name:
         pub fn threadResume(self: *const @This()) osError!void {
             return self.thread.threadResume();
         }
-        pub fn flagsSet(self: *const @This(), flags: u32) u32 {
+        pub fn flagsSet(self: *const @This(), flags: u32) osFlagsError!u32 {
             return self.thread.flagsSet(flags);
         }
-        pub fn flagsClear(self: *const @This(), flags: u32) u32 {
+        pub fn flagsClear(self: *const @This(), flags: u32) osFlagsError!u32 {
             return self.thread.flagsClear(flags);
         }
-        pub fn flagsGet(self: *const @This()) u32 {
+        pub fn flagsGet(self: *const @This()) osFlagsError!u32 {
             return self.thread.flagsGet();
         }
-        pub fn flagsWait(self: *const @This(), options: osFlagsOptions, timeout: u32) u32 {
-            return self.thread.flagsWait(options, timeout);
+        pub fn flagsWait(self: *const @This(), flags: u32, options: u32, timeout: u32) osFlagsError!u32 {
+            return self.thread.flagsWait(flags, options, timeout);
         }
     };
 }
@@ -251,8 +265,7 @@ pub const thread = struct {
     }
 
     pub fn yield(self: *const @This()) osError!void {
-        _ = self;
-        return osErrorMap(osThreadYield());
+        return if (self.id == c_rtx.osThreadGetId()) osErrorMap(osThreadYield()) else osError.osError;
     }
 
     pub fn threadSuspend(self: *const @This()) osError!void {
@@ -263,20 +276,20 @@ pub const thread = struct {
         return osErrorMap(osThreadResume(self.id));
     }
 
-    pub fn flagsSet(self: *const @This(), flags: u32) u32 {
-        return osThreadFlagsSet(self.id, flags);
+    pub fn flagsSet(self: *const @This(), flags: u32) osFlagsError!u32 {
+        return osFlagsErrorMap(osThreadFlagsSet(self.id, flags));
     }
 
-    pub fn flagsClear(self: *const @This(), flags: u32) u32 {
-        return osThreadFlagsClear(self.id, flags);
+    pub fn flagsClear(self: *const @This(), flags: u32) osFlagsError!u32 {
+        return if (self.id == osThreadGetId()) osFlagsErrorMap(osThreadFlagsClear(flags)) else osFlagsError.osFlagsErrorUnknown;
     }
 
-    pub fn flagsGet(self: *const @This()) u32 {
-        return osThreadFlagsGet(self.id);
+    pub fn flagsGet(self: *const @This()) osFlagsError!u32 {
+        return if (self.id == osThreadGetId()) osFlagsErrorMap(osThreadFlagsGet()) else osFlagsError.osFlagsErrorUnknown;
     }
 
-    pub fn flagsWait(self: *const @This(), options: osFlagsOptions, timeout: u32) osError!u32 {
-        return osFlagsErrorMap(osThreadFlagsWait(self.id, @intFromEnum(options), timeout));
+    pub fn flagsWait(self: *const @This(), flags: u32, options: u32, timeout: u32) osFlagsError!u32 {
+        return if (self.id == osThreadGetId()) osFlagsErrorMap(osThreadFlagsWait(flags, options, timeout)) else osFlagsError.osFlagsErrorUnknown;
     }
 };
 
@@ -409,16 +422,16 @@ pub const osEventFlagsGet = c_rtx.osEventFlagsGet;
 pub const osEventFlagsWait = c_rtx.osEventFlagsWait;
 pub const osEventFlagsDelete = c_rtx.osEventFlagsDelete;
 
-fn osFlagsErrorMap(ef: u32) osError!u32 {
+fn osFlagsErrorMap(ef: u32) osFlagsError!u32 {
     if (@as(u32, @intCast(c_rtx.osFlagsError & ef)) == @as(u32, @intCast(c_rtx.osFlagsError))) {
         return switch (ef) {
-            c_rtx.osFlagsErrorUnknown => osError.osError,
-            c_rtx.osFlagsErrorTimeout => osError.osErrorTimeout,
-            c_rtx.osFlagsErrorResource => osError.osErrorResource,
-            c_rtx.osFlagsErrorParameter => osError.osErrorParameter,
-            c_rtx.osFlagsErrorISR => osError.osErrorISR,
-            c_rtx.osFlagsErrorSafetyClass => osError.osErrorSafetyClass,
-            else => osError.osError,
+            c_rtx.osFlagsErrorUnknown => osFlagsError.osFlagsErrorUnknown,
+            c_rtx.osFlagsErrorTimeout => osFlagsError.osFlagsErrorTimeout,
+            c_rtx.osFlagsErrorResource => osFlagsError.osFlagsErrorResource,
+            c_rtx.osFlagsErrorParameter => osFlagsError.osFlagsErrorParameter,
+            c_rtx.osFlagsErrorISR => osFlagsError.osFlagsErrorISR,
+            c_rtx.osFlagsErrorSafetyClass => osFlagsError.osFlagsErrorSafetyClass,
+            else => osFlagsError.osFlagsErrorUnknown,
         };
     } else {
         return ef;
@@ -444,23 +457,23 @@ pub const eventFlags = struct {
     }
 
     /// Set specified event flags
-    pub fn set(self: *const @This(), flags: u32) u32 {
-        return osEventFlagsSet(self.id, flags);
+    pub fn set(self: *const @This(), flags: u32) osFlagsError!u32 {
+        return osFlagsErrorMap(osEventFlagsSet(self.id, flags));
     }
 
     /// Clear specified event flags
-    pub fn clear(self: *const @This(), flags: u32) u32 {
-        return osEventFlagsClear(self.id, flags);
+    pub fn clear(self: *const @This(), flags: u32) osFlagsError!u32 {
+        return osFlagsErrorMap(osEventFlagsClear(self.id, flags));
     }
 
     /// Get current event flags
-    pub fn get(self: *const @This()) u32 {
-        return osEventFlagsGet(self.id);
+    pub fn get(self: *const @This()) osFlagsError!u32 {
+        return osFlagsErrorMap(osEventFlagsGet(self.id));
     }
 
     /// Wait for one or more event flags to become signaled
-    pub fn wait(self: *const @This(), flags: u32, options: osFlagsOptions, timeout: u32) osError!u32 {
-        return osFlagsErrorMap(osEventFlagsWait(self.id, flags, @intFromEnum(options), timeout));
+    pub fn wait(self: *const @This(), flags: u32, options: u32, timeout: u32) osFlagsError!u32 {
+        return osFlagsErrorMap(osEventFlagsWait(self.id, flags, options, timeout));
     }
 
     /// Delete the event flags object
@@ -507,22 +520,22 @@ pub fn StaticEventFlags(comptime name: [*:0]const u8) type {
         }
 
         /// Set specified event flags
-        pub fn set(self: *const @This(), flags: u32) u32 {
+        pub fn set(self: *const @This(), flags: u32) osFlagsError!u32 {
             return self.ef.set(flags);
         }
 
         /// Clear specified event flags
-        pub fn clear(self: *const @This(), flags: u32) u32 {
+        pub fn clear(self: *const @This(), flags: u32) osFlagsError!u32 {
             return self.ef.clear(flags);
         }
 
         /// Get current event flags
-        pub fn get(self: *const @This()) u32 {
+        pub fn get(self: *const @This()) osFlagsError!u32 {
             return self.ef.get();
         }
 
         /// Wait for one or more event flags to become signaled
-        pub fn wait(self: *const @This(), flags: u32, options: osFlagsOptions, timeout: u32) osError!u32 {
+        pub fn wait(self: *const @This(), flags: u32, options: u32, timeout: u32) osFlagsError!u32 {
             return self.ef.wait(flags, options, timeout);
         }
 
