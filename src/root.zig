@@ -11,7 +11,7 @@ pub fn JobQueueTask(comptime T: type, comptime stack_size: usize, comptime queue
         /// Job Function Type
         pub const jobFnType = *const fn (param1: ?*T) void;
 
-        //// Job Parameter Type
+        /// Job Parameter Type
         pub const jobFnParamType = ?*T;
 
         /// Job Queue Element Type
