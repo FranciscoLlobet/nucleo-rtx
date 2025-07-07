@@ -30,6 +30,8 @@ pub const StaticSemaphore = semaphore.StaticSemaphore;
 pub const MessageQueue = @import("messageQueue.zig").MessageQueue;
 pub const StaticMessageQueue = @import("messageQueue.zig").StaticMessageQueue;
 
+pub const osError = core.osError;
+pub const osFlagsError = core.osFlagsError;
 pub const osWaitForever: u32 = @intCast(c_rtx.osWaitForever);
 
 pub const osDelay = delay.osDelay;

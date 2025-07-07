@@ -6,41 +6,58 @@ const rtx = @import("cmsis_rtx");
 
 extern fn main() callconv(.C) c_int;
 
-const job_queue_fn = *const fn (param1: ?*anyopaque) void;
+pub fn JobQueueTask(comptime T: type, comptime stack_size: usize, comptime queue_len: usize, comptime name: []const u8) type {
+    return struct {
+        /// Job Function Type
+        pub const jobFnType = *const fn (param1: ?*T) void;
 
-const job_queue_element = struct {
-    job_fn: job_queue_fn,
-    param1: ?*anyopaque,
-};
+        //// Job Parameter Type
+        pub const jobFnParamType = ?*T;
 
-var jobQueueTask: struct {
-    thread: rtx.StaticThread(@This(), 8 * 128, "jobRunner", jobRunner),
-    queue: rtx.StaticMessageQueue(job_queue_element, 5, "jobQueue"),
+        /// Job Queue Element Type
+        const jobQueueElement = struct {
+            job_fn: jobFnType,
+            param1: jobFnParamType,
+        };
 
-    fn new(self: *@This(), priority: rtx.thread.osThreadPriority) !void {
-        try self.thread.new(self, 0, priority);
-        try self.queue.new(0);
-    }
+        /// Static Thread
+        thread: rtx.StaticThread(@This(), stack_size, name ++ "Runner", jobRunner),
 
-    /// Job Runner Function
-    fn jobRunner(arg: ?*@This()) void {
-        periodic_timer.start(1000) catch {};
+        /// Static Job Queue
+        queue: rtx.StaticMessageQueue(jobQueueElement, queue_len, name ++ "Queue"),
 
-        while (true) {
-            if (arg.?.queue.getMsg(rtx.osWaitForever)) |msg| {
-                msg.data.job_fn(msg.data.param1);
-            } else |_| {
-                // Catch errors
+        fn jobRunner(arg: ?*@This()) void {
+            periodic_timer.start(1000) catch {};
+            while (true) {
+                if (arg.?.queue.getMsg(rtx.osWaitForever)) |msg| {
+                    msg.data.job_fn(msg.data.param1);
+                } else |err| switch (err) {
+                    rtx.osError.osErrorTimeout => {
+                        continue; // Timeout, just continue
+                    },
+                    else => {
+                        // Other errors
+                    },
+                }
             }
         }
-    }
 
-    pub fn submitJob(self: *@This(), jobfn: job_queue_fn, param1: ?*anyopaque, timeout: u32) !void {
-        try self.queue.put(&job_queue_element{ .job_fn = jobfn, .param1 = param1 }, 0, timeout);
-    }
-} = undefined;
+        pub fn submitJob(self: *@This(), jobfn: jobFnType, param1: jobFnParamType, timeout: u32) !void {
+            try self.queue.put(&jobQueueElement{ .job_fn = jobfn, .param1 = param1 }, 0, timeout);
+        }
 
-fn job(param: ?*anyopaque) void {
+        pub fn new(self: *@This(), priority: rtx.thread.osThreadPriority) !void {
+            try self.thread.new(self, 0, priority);
+            try self.queue.new(0);
+        }
+    };
+}
+
+const jobQueueTaskType = JobQueueTask(u32, 1024, 5, "JobQueue");
+
+var jobQueueTask: jobQueueTaskType = undefined;
+
+fn job(param: jobQueueTaskType.jobFnParamType) void {
     _ = param;
 }
 
@@ -58,6 +75,7 @@ export fn zmain() noreturn {
     jobQueueTask.new(.osPriorityNormal) catch {};
     periodic_timer.new(.osTimerPeriodic, &jobQueueTask, 0) catch {};
 
+    //periodic_timer.start(1000) catch {};
     // periodic_timer.start(1000) catch {};
 
     rtx.kernel.start() catch {};
