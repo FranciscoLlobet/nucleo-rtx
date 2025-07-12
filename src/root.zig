@@ -29,8 +29,8 @@ pub fn JobQueueTask(comptime T: type, comptime stack_size: usize, comptime queue
         fn jobRunner(arg: ?*@This()) void {
             periodic_timer.start(1000) catch {};
             while (true) {
-                if (arg.?.queue.getMsg(rtx.osWaitForever)) |msg| {
-                    msg.data.job_fn(msg.data.param1);
+                if (arg.?.queue.getMsg(rtx.osWaitForever)) |el| {
+                    el.msg.job_fn(el.msg.param1);
                 } else |err| switch (err) {
                     rtx.osError.osErrorTimeout => {
                         continue; // Timeout, just continue
@@ -73,10 +73,8 @@ export fn zmain() noreturn {
     rtx.kernel.initialize() catch {};
 
     jobQueueTask.new(.osPriorityNormal) catch {};
-    periodic_timer.new(.osTimerPeriodic, &jobQueueTask, 0) catch {};
 
-    //periodic_timer.start(1000) catch {};
-    // periodic_timer.start(1000) catch {};
+    periodic_timer.new(.osTimerPeriodic, &jobQueueTask, 0) catch {};
 
     rtx.kernel.start() catch {};
 

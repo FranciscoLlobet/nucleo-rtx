@@ -28,11 +28,6 @@ pub fn MessageQueue(comptime T: type) type {
     return struct {
         id: osMessageQueueId_t = undefined,
 
-        pub const Message = struct {
-            data: T,
-            priority: u8,
-        };
-
         /// Creates a MessageQueue object using an existing MessageQueueId reference
         pub fn create(id: osMessageQueueId_t) @This() {
             return .{ .id = id };
@@ -59,12 +54,13 @@ pub fn MessageQueue(comptime T: type) type {
         }
 
         /// Ger a message from the queue
-        pub fn getMsg(self: *const @This(), timeout: u32) osError!Message {
-            var msg: Message = undefined;
+        pub fn getMsg(self: *const @This(), timeout: u32) osError!struct { msg: T, priority: u8 } {
+            var msg: T = undefined;
+            var priority: u8 = undefined;
 
-            try self.get(&(msg.data), &(msg.priority), timeout);
+            try self.get(&msg, &priority, timeout);
 
-            return msg;
+            return .{ .msg = msg, .priority = priority };
         }
 
         /// Get maximum number of messages in the queue
@@ -151,12 +147,13 @@ pub fn StaticMessageQueue(comptime T: type, comptime msg_count: usize, comptime 
         }
 
         /// Ger a message from the queue
-        pub fn getMsg(self: *const @This(), timeout: u32) osError!MessageQueue(T).Message {
-            var msg: MessageQueue(T).Message = undefined;
+        pub fn getMsg(self: *const @This(), timeout: u32) osError!struct { msg: T, priority: u8 } {
+            var msg: T = undefined;
+            var priority: u8 = undefined;
 
-            try self.get(&(msg.data), &(msg.priority), timeout);
+            try self.get(&msg, &priority, timeout);
 
-            return msg;
+            return .{ .msg = msg, .priority = priority };
         }
 
         /// Get maximum number of messages in the queue
