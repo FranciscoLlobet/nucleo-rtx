@@ -22,6 +22,7 @@ pub fn build(b: *std.Build) void {
     });
 
     const stm32_hal = b.dependency("stm32_hal", .{});
+    const cmsis_6 = b.dependency("cmsis_6", .{});
     // const cmsis_rtx = b.dependency("cmsis_rtx", .{});
 
     lib.addCSourceFiles(.{ .files = &.{
@@ -46,9 +47,10 @@ pub fn build(b: *std.Build) void {
     lib.addIncludePath(b.path("Inc"));
 
     lib.addIncludePath(stm32_hal.artifact("stm32_hal").getEmittedIncludeTree().path(b, "stm32_hal/include"));
-
-    lib.addIncludePath(b.path("../Drivers/CMSIS/Device/ST/STM32G4xx/Include"));
-    lib.addIncludePath(b.path("../Platform/CMSIS_6/CMSIS_6/CMSIS/Core/Include"));
+    lib.addIncludePath(cmsis_6.artifact("CMSIS_6").getEmittedIncludeTree().path(b, "cmsis_6/core/include"));
+    lib.addIncludePath(cmsis_6.artifact("CMSIS_6").getEmittedIncludeTree().path(b, "cmsis_6/device/st/stm32g4xx/include"));
+    //lib.addIncludePath(b.path("../Drivers/CMSIS/Device/ST/STM32G4xx/Include"));
+    //lib.addIncludePath(b.path("../Platform/CMSIS_6/CMSIS_6/CMSIS/Core/Include"));
     lib.addIncludePath(b.path("../Platform/CMSIS_6/CMSIS_6/CMSIS/RTOS2/Include"));
     lib.addIncludePath(b.path("../Platform/CMSIS-RTX/CMSIS-RTX/Include"));
     lib.addIncludePath(b.path("../picolibc/include"));

@@ -15,6 +15,8 @@ pub fn build(b: *std.Build) void {
         .optimize = optimize,
     });
 
+    const cmsis_6 = b.dependency("cmsis_6", .{});
+
     lib.addCSourceFiles(.{ .files = &.{
         "STM32G4xx_HAL_Driver/Src/stm32g4xx_hal.c",
         "STM32G4xx_HAL_Driver/Src/stm32g4xx_hal_cortex.c",
@@ -50,8 +52,10 @@ pub fn build(b: *std.Build) void {
 
     lib.addIncludePath(b.path("../../Core/Inc"));
     lib.addIncludePath(b.path("STM32G4xx_HAL_Driver/Inc"));
-    lib.addIncludePath(b.path("../CMSIS/Device/ST/STM32G4xx/Include"));
-    lib.addIncludePath(b.path("../../Platform/CMSIS_6/CMSIS_6/CMSIS/Core/Include"));
+    lib.addIncludePath(cmsis_6.artifact("CMSIS_6").getEmittedIncludeTree().path(b, "cmsis_6/core/include"));
+    lib.addIncludePath(cmsis_6.artifact("CMSIS_6").getEmittedIncludeTree().path(b, "cmsis_6/device/st/stm32g4xx/include"));
+    //lib.addIncludePath(b.path("../CMSIS/Device/ST/STM32G4xx/Include"));
+    //lib.addIncludePath(b.path("../../Platform/CMSIS_6/CMSIS_6/CMSIS/Core/Include"));
 
     lib.installHeadersDirectory(b.path("STM32G4xx_HAL_Driver/Inc"), "stm32_hal/include", .{});
 

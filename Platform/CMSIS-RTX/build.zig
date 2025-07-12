@@ -33,15 +33,11 @@ pub fn build(b: *std.Build) void {
         .optimize = optimize,
     });
 
-    const stm32_hal = b.dependency("stm32_hal", .{
-        .optimize = optimize,
-        .target = target,
-    });
+    const stm32_hal = b.dependency("stm32_hal", .{});
 
-    const Core = b.dependency("Core", .{
-        .optimize = optimize,
-        .target = target,
-    });
+    const Core = b.dependency("Core", .{});
+
+    const cmsis_6 = b.dependency("cmsis_6", .{});
 
     lib.addCSourceFiles(.{ .files = &.{
         "CMSIS-RTX/Source/rtx_delay.c",
@@ -71,10 +67,11 @@ pub fn build(b: *std.Build) void {
 
     lib.addIncludePath(Core.artifact("Core").getEmittedIncludeTree().path(b, "core/include"));
     lib.addIncludePath(stm32_hal.artifact("stm32_hal").getEmittedIncludeTree().path(b, "stm32_hal/include"));
+    lib.addIncludePath(cmsis_6.artifact("CMSIS_6").getEmittedIncludeTree().path(b, "cmsis_6/core/include"));
+    lib.addIncludePath(cmsis_6.artifact("CMSIS_6").getEmittedIncludeTree().path(b, "cmsis_6/rtos2/include"));
+    lib.addIncludePath(cmsis_6.artifact("CMSIS_6").getEmittedIncludeTree().path(b, "cmsis_6/device/st/stm32g4xx/include"));
 
     lib.addIncludePath(b.path("CMSIS-RTX/Include"));
-    lib.addIncludePath(b.path("../CMSIS_6/CMSIS_6/CMSIS/Core/Include"));
-    lib.addIncludePath(b.path("../CMSIS_6/CMSIS_6/CMSIS/RTOS2/Include"));
 
     // STM32 CMSIS
     lib.addIncludePath(b.path("../../Drivers/CMSIS/Device/ST/STM32G4xx/Include"));
@@ -88,8 +85,9 @@ pub fn build(b: *std.Build) void {
     mod.addIncludePath(stm32_hal.artifact("stm32_hal").getEmittedIncludeTree().path(b, "stm32_hal/include"));
 
     mod.addIncludePath(b.path("CMSIS-RTX/Include"));
-    mod.addIncludePath(b.path("../CMSIS_6/CMSIS_6/CMSIS/Core/Include"));
-    mod.addIncludePath(b.path("../CMSIS_6/CMSIS_6/CMSIS/RTOS2/Include"));
+    mod.addIncludePath(cmsis_6.artifact("CMSIS_6").getEmittedIncludeTree().path(b, "cmsis_6/core/include"));
+    mod.addIncludePath(cmsis_6.artifact("CMSIS_6").getEmittedIncludeTree().path(b, "cmsis_6/rtos2/include"));
+    mod.addIncludePath(cmsis_6.artifact("CMSIS_6").getEmittedIncludeTree().path(b, "cmsis_6/device/st/stm32g4xx/include"));
 
     mod.addIncludePath(b.path("../../Drivers/CMSIS/Device/ST/STM32G4xx/Include"));
     mod.addIncludePath(b.path("../../picolibc/include"));
