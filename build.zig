@@ -64,5 +64,12 @@ pub fn build(b: *std.Build) void {
 
     exe.setLinkerScript(b.path("STM32G474_picolibc.ld"));
 
+    const bin = b.addObjCopy(exe.getEmittedBin(), .{
+        .format = .bin,
+    });
+    const hex = b.addObjCopy(exe.getEmittedBin(), .{ .format = .hex });
     b.installArtifact(exe);
+
+    b.getInstallStep().dependOn(&b.addInstallBinFile(bin.getOutput(), "testy.bin").step);
+    b.getInstallStep().dependOn(&b.addInstallBinFile(hex.getOutput(), "testy.hex").step);
 }
