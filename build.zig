@@ -51,29 +51,9 @@ pub fn build(b: *std.Build) void {
     exe.addIncludePath(cmsis_6_package.artifact("CMSIS_6").getEmittedIncludeTree().path(b, "cmsis_6/rtos2/include"));
     exe.addIncludePath(cmsis_6_package.artifact("CMSIS_6").getEmittedIncludeTree().path(b, "cmsis_6/device/st/stm32g4xx/include"));
 
-    //exe.addIncludePath(b.path("Drivers/stm32_hal/STM32G4xx_HAL_Driver/Inc"));
-    //exe.addIncludePath(b.path("Drivers/CMSIS/Device/ST/STM32G4xx/Include"));
-    //exe.addIncludePath(b.path("Platform/CMSIS_6/CMSIS_6/CMSIS/Core/Include"));
-    // exe.addIncludePath(b.path("Platform/CMSIS_6/CMSIS_6/CMSIS/RTOS2/Include"));
-    //exe.addIncludePath(b.path("Platform/CMSIS-RTX/CMSIS-RTX/Include"));
     exe.addIncludePath(b.path("picolibc/include"));
 
     exe.addAssemblyFile(b.path("Core/Startup/startup_stm32g474retx.s"));
-
-    exe.addCSourceFiles(.{ .files = &.{
-        "Core/Src/stm32g4xx_hal_timebase_tim.c",
-        "Core/Src/stm32g4xx_hal_msp.c",
-        "Core/Src/stm32g4xx_it.c",
-        "Core/Src/system_stm32g4xx.c",
-    }, .flags = &.{
-        "-std=c99",
-        "-Og",
-        "-DCMSIS_device_header=\"stm32g4xx.h\"",
-        "-DSTM32G474xx",
-        "-DUSE_HAL_DRIVER",
-        "-ffunction-sections",
-        "-fdata-sections",
-    } });
 
     exe.root_module.addImport("cmsis_rtx", cmsis_rtx_package.module("cmsis_rtx"));
     exe.addObjectFile(core_package.artifact("Core").getEmittedBin());
@@ -85,7 +65,4 @@ pub fn build(b: *std.Build) void {
     exe.setLinkerScript(b.path("STM32G474_picolibc.ld"));
 
     b.installArtifact(exe);
-
-    // const lib_module = b.addModule("core", .{ .root_source_file = b.path("src/root.zig"), .target = target, .optimize = optimize });
-
 }

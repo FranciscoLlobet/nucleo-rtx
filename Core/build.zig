@@ -30,7 +30,10 @@ pub fn build(b: *std.Build) void {
 
         "Src/RTX_Config.c",
         "Src/spi.c",
-
+        "Src/stm32g4xx_hal_timebase_tim.c",
+        "Src/stm32g4xx_hal_msp.c",
+        "Src/stm32g4xx_it.c",
+        "Src/system_stm32g4xx.c",
         "../sensors/no-OS/drivers/adc/ad7124/ad7124.c",
         "../sensors/no-OS/drivers/adc/ad7124/ad7124_regs.c",
         "../sensors/no-OS/util/no_os_util.c",
