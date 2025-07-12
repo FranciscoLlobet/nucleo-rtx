@@ -40,7 +40,7 @@
             .path = "Drivers/stm32_hal",
         },
         .cmsis_rtx = .{
-            .path = "Middlewares/Third_Party",
+            .path = "Platform/CMSIS-RTX",
         },
         .Core = .{
             .path = "Core",

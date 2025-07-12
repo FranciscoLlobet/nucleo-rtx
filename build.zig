@@ -39,12 +39,14 @@ pub fn build(b: *std.Build) void {
         .optimize = optimize,
     });
 
-    exe.addIncludePath(b.path("Core/Inc"));
-    exe.addIncludePath(b.path("Drivers/stm32_hal/STM32G4xx_HAL_Driver/Inc"));
+    exe.addIncludePath(core_package.artifact("Core").getEmittedIncludeTree().path(b, "core/include"));
+    exe.addIncludePath(stm32_hal_package.artifact("stm32_hal").getEmittedIncludeTree().path(b, "stm32_hal/include"));
+    exe.addIncludePath(cmsis_rtx_package.artifact("cmsis_rtx").getEmittedIncludeTree().path(b, "cmsis_rtx/include"));
+    //exe.addIncludePath(b.path("Drivers/stm32_hal/STM32G4xx_HAL_Driver/Inc"));
     exe.addIncludePath(b.path("Drivers/CMSIS/Device/ST/STM32G4xx/Include"));
-    exe.addIncludePath(b.path("Middlewares/Third_Party/CMSIS_6/CMSIS/Core/Include"));
-    exe.addIncludePath(b.path("Middlewares/Third_Party/CMSIS_6/CMSIS/RTOS2/Include"));
-    exe.addIncludePath(b.path("Middlewares/Third_Party/CMSIS-RTX/Include"));
+    exe.addIncludePath(b.path("Platform/CMSIS_6/CMSIS_6/CMSIS/Core/Include"));
+    exe.addIncludePath(b.path("Platform/CMSIS_6/CMSIS_6/CMSIS/RTOS2/Include"));
+    //exe.addIncludePath(b.path("Platform/CMSIS-RTX/CMSIS-RTX/Include"));
     exe.addIncludePath(b.path("picolibc/include"));
 
     exe.addAssemblyFile(b.path("Core/Startup/startup_stm32g474retx.s"));

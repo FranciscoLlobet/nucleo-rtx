@@ -1,12 +1,12 @@
-[submodule "Middlewares/Third_Party/CMSIS-RTX"]
-	path = Middlewares/Third_Party/CMSIS-RTX
-	url = https://github.com/FranciscoLlobet/CMSIS-RTX.git
-[submodule "Middlewares/Third_Party/CMSIS_6"]
-	path = Middlewares/Third_Party/CMSIS_6
-	url = https://github.com/FranciscoLlobet/CMSIS_6.git
 [submodule "sensors/no-OS"]
 	path = sensors/no-OS
 	url = https://github.com/analogdevicesinc/no-OS.git
 [submodule "picolibc/picolibc"]
 	path = picolibc/picolibc
 	url = https://github.com/FranciscoLlobet/picolibc.git
+[submodule "Platform/CMSIS-RTX/CMSIS-RTX"]
+	path = Platform/CMSIS-RTX/CMSIS-RTX
+	url = https://github.com/FranciscoLlobet/CMSIS-RTX.git
+[submodule "Platform/CMSIS_6/CMSIS_6"]
+	path = Platform/CMSIS_6/CMSIS_6
+	url = https://github.com/FranciscoLlobet/CMSIS_6.git

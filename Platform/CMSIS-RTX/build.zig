@@ -33,6 +33,16 @@ pub fn build(b: *std.Build) void {
         .optimize = optimize,
     });
 
+    const stm32_hal = b.dependency("stm32_hal", .{
+        .optimize = optimize,
+        .target = target,
+    });
+
+    const Core = b.dependency("Core", .{
+        .optimize = optimize,
+        .target = target,
+    });
+
     lib.addCSourceFiles(.{ .files = &.{
         "CMSIS-RTX/Source/rtx_delay.c",
         "CMSIS-RTX/Source/rtx_evflags.c",
@@ -48,7 +58,7 @@ pub fn build(b: *std.Build) void {
         "CMSIS-RTX/Source/rtx_thread.c",
         "CMSIS-RTX/Source/rtx_timer.c",
         "CMSIS-RTX/Source/GCC/irq_armv7m.S",
-        "CMSIS_6/CMSIS/RTOS2/Source/os_systick.c",
+        "../CMSIS_6/CMSIS_6/CMSIS/RTOS2/Source/os_systick.c",
     }, .flags = &.{
         "-std=c99",
         "-DCMSIS_device_header=\"stm32g4xx.h\"",
@@ -59,27 +69,29 @@ pub fn build(b: *std.Build) void {
         "-fdata-sections",
     } });
 
-    lib.addIncludePath(b.path("../../Core/Inc/"));
+    lib.addIncludePath(Core.artifact("Core").getEmittedIncludeTree().path(b, "core/include"));
+    lib.addIncludePath(stm32_hal.artifact("stm32_hal").getEmittedIncludeTree().path(b, "stm32_hal/include"));
 
     lib.addIncludePath(b.path("CMSIS-RTX/Include"));
-    lib.addIncludePath(b.path("CMSIS_6/CMSIS/Core/Include"));
-    lib.addIncludePath(b.path("CMSIS_6/CMSIS/RTOS2/Include"));
+    lib.addIncludePath(b.path("../CMSIS_6/CMSIS_6/CMSIS/Core/Include"));
+    lib.addIncludePath(b.path("../CMSIS_6/CMSIS_6/CMSIS/RTOS2/Include"));
 
     // STM32 CMSIS
     lib.addIncludePath(b.path("../../Drivers/CMSIS/Device/ST/STM32G4xx/Include"));
-    lib.addIncludePath(b.path("../../Drivers/stm32_hal/STM32G4xx_HAL_Driver/Inc"));
 
     // Stdlib
     lib.addIncludePath(b.path("../../picolibc/include"));
 
-    mod.addIncludePath(b.path("../../Core/Inc/"));
+    lib.installHeadersDirectory(b.path("CMSIS-RTX/Include"), "cmsis_rtx/include", .{});
+
+    mod.addIncludePath(Core.artifact("Core").getEmittedIncludeTree().path(b, "core/include"));
+    mod.addIncludePath(stm32_hal.artifact("stm32_hal").getEmittedIncludeTree().path(b, "stm32_hal/include"));
 
     mod.addIncludePath(b.path("CMSIS-RTX/Include"));
-    mod.addIncludePath(b.path("CMSIS_6/CMSIS/Core/Include"));
-    mod.addIncludePath(b.path("CMSIS_6/CMSIS/RTOS2/Include"));
+    mod.addIncludePath(b.path("../CMSIS_6/CMSIS_6/CMSIS/Core/Include"));
+    mod.addIncludePath(b.path("../CMSIS_6/CMSIS_6/CMSIS/RTOS2/Include"));
 
     mod.addIncludePath(b.path("../../Drivers/CMSIS/Device/ST/STM32G4xx/Include"));
-    mod.addIncludePath(b.path("../../Drivers/stm32_hal/STM32G4xx_HAL_Driver/Inc"));
     mod.addIncludePath(b.path("../../picolibc/include"));
 
     b.installArtifact(lib);

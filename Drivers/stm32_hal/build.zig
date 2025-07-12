@@ -5,12 +5,6 @@ const std = @import("std");
 // runner.
 pub fn build(b: *std.Build) void {
     const target = b.standardTargetOptions(.{});
-    //const target = b.resolveTargetQuery(.{
-    //    .cpu_arch = .thumb,
-    //    .os_tag = .freestanding,
-    //    .abi = .eabi,
-    //    .cpu_model = .{ .explicit = &std.Target.arm.cpu.cortex_m4 },
-    //});
 
     const optimize = b.standardOptimizeOption(.{});
 
@@ -57,7 +51,9 @@ pub fn build(b: *std.Build) void {
     lib.addIncludePath(b.path("../../Core/Inc"));
     lib.addIncludePath(b.path("STM32G4xx_HAL_Driver/Inc"));
     lib.addIncludePath(b.path("../CMSIS/Device/ST/STM32G4xx/Include"));
-    lib.addIncludePath(b.path("../../Middlewares/Third_Party/CMSIS_6/CMSIS/Core/Include"));
-    //   lib.addIncludePath(b.path("../../picolibc/include"));
+    lib.addIncludePath(b.path("../../Platform/CMSIS_6/CMSIS_6/CMSIS/Core/Include"));
+
+    lib.installHeadersDirectory(b.path("STM32G4xx_HAL_Driver/Inc"), "stm32_hal/include", .{});
+
     b.installArtifact(lib);
 }
