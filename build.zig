@@ -70,6 +70,6 @@ pub fn build(b: *std.Build) void {
     const hex = b.addObjCopy(exe.getEmittedBin(), .{ .format = .hex });
     b.installArtifact(exe);
 
-    b.getInstallStep().dependOn(&b.addInstallBinFile(bin.getOutput(), "testy.bin").step);
-    b.getInstallStep().dependOn(&b.addInstallBinFile(hex.getOutput(), "testy.hex").step);
+    b.getInstallStep().dependOn(&b.addInstallBinFile(bin.getOutput(), "app.bin").step);
+    b.getInstallStep().dependOn(&b.addInstallBinFile(hex.getOutput(), "app.hex").step);
 }
