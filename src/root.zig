@@ -3,6 +3,7 @@
 //! start with main.zig instead.
 const std = @import("std");
 const rtx = @import("cmsis_rtx");
+const threadx = @import("threadx");
 
 extern fn main() callconv(.C) c_int;
 

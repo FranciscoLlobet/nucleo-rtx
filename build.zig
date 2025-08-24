@@ -13,6 +13,7 @@ pub fn build(b: *std.Build) void {
         .cpu_model = .{
             .explicit = &std.Target.arm.cpu.cortex_m4,
         },
+        .cpu_features_add = std.Target.arm.featureSet(&.{.vfp4d16sp}),
     });
 
     const optimize = b.standardOptimizeOption(.{});
@@ -37,6 +38,11 @@ pub fn build(b: *std.Build) void {
         .target = target,
     });
 
+    const threadx_package = b.dependency("threadx", .{
+        .optimize = optimize,
+        .target = target,
+    });
+
     const exe = b.addExecutable(.{
         .name = "testy.elf",
         .root_source_file = b.path("src/root.zig"),
@@ -50,15 +56,18 @@ pub fn build(b: *std.Build) void {
     exe.addIncludePath(cmsis_6_package.artifact("CMSIS_6").getEmittedIncludeTree().path(b, "cmsis_6/core/include"));
     exe.addIncludePath(cmsis_6_package.artifact("CMSIS_6").getEmittedIncludeTree().path(b, "cmsis_6/rtos2/include"));
     exe.addIncludePath(cmsis_6_package.artifact("CMSIS_6").getEmittedIncludeTree().path(b, "cmsis_6/device/st/stm32g4xx/include"));
+    exe.addIncludePath(threadx_package.artifact("threadx").getEmittedIncludeTree().path(b, "threadx/include"));
 
     exe.addIncludePath(b.path("picolibc/include"));
 
     exe.addAssemblyFile(b.path("Core/Startup/startup_stm32g474retx.s"));
 
     exe.root_module.addImport("cmsis_rtx", cmsis_rtx_package.module("cmsis_rtx"));
+    exe.root_module.addImport("threadx", threadx_package.module("threadx"));
     exe.addObjectFile(core_package.artifact("Core").getEmittedBin());
     exe.addObjectFile(stm32_hal_package.artifact("stm32_hal").getEmittedBin());
     exe.addObjectFile(cmsis_rtx_package.artifact("cmsis_rtx").getEmittedBin());
+    exe.addObjectFile(threadx_package.artifact("threadx").getEmittedBin());
 
     exe.addObjectFile(b.path("picolibc/libc.a"));
 

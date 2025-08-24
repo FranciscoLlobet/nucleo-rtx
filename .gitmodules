@@ -10,3 +10,6 @@
 [submodule "Platform/CMSIS_6/CMSIS_6"]
 	path = Platform/CMSIS_6/CMSIS_6
 	url = https://github.com/FranciscoLlobet/CMSIS_6.git
+[submodule "Platform/ThreadX/threadx"]
+	path = Platform/ThreadX/threadx
+	url = https://github.com/FranciscoLlobet/threadx.git

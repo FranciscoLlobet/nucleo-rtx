@@ -18,3 +18,9 @@ This project and repository is not affiliated with ST Microelectronics, ARM Limi
 ### CMSIS RTX Wrapper for Zig
 
 The CMSIS RTX Wrapper for Zig can be found in [RTX](Middlewares/Third_Party/)
+
+# Build
+
+```shell
+uv run python -mziglang build
+```
