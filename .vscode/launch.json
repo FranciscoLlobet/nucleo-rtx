@@ -8,7 +8,7 @@
         {
             "name": "Cortex Debug",
             "cwd": "${workspaceFolder}",
-            "executable": "./zig-out/bin/testy.elf",
+            "executable": "./zig-out/bin/nucleo-threadx.elf",
             "request": "launch",
             "type": "cortex-debug",
             "runToEntryPoint": "main",

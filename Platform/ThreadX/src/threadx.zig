@@ -1,5 +1,9 @@
 const std = @import("std");
 
-pub const c = @import("c.zig");
+const c = @import("c.zig");
 
 pub const kernel = @import("kernel.zig");
+
+pub const thread = @import("thread.zig");
+
+pub const timer = @import("timer.zig");

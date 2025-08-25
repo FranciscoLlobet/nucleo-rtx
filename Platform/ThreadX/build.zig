@@ -294,6 +294,8 @@ pub fn build(b: *std.Build) void {
         "threadx/ports/cortex_m4/gnu/src/tx_thread_system_return.S",
         "threadx/ports/cortex_m4/gnu/src/tx_timer_interrupt.S",
         "threadx/ports/cortex_m4/gnu/src/tx_misra.S",
+        //"src/stm32g4_picolibc/cortexm4_vectors.S",
+        "src/stm32g4_picolibc/tx_initialize_low_level.S",
     };
 
     // Add ThreadX C source files with optimized compilation flags
