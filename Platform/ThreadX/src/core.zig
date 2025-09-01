@@ -42,4 +42,15 @@ pub const return_values = enum(u32) {
     TX_FEATURE_NOT_ENABLED = c.TX_FEATURE_NOT_ENABLED,
 };
 
+pub const osError = error{
+    osError,
+};
+
+pub fn osErrorMap(osStatus: c.UINT) osError!void {
+    return switch (osStatus) {
+        c.TX_SUCCESS => {},
+        else => osError.osError,
+    };
+}
+
 pub const tick_value_t = c.ULONG;

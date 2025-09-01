@@ -25,7 +25,7 @@ pub fn JobQueueTask(comptime T: type, comptime stack_size: usize, comptime queue
         thread: rtx.StaticThread(@This(), stack_size, name ++ "Runner", jobRunner),
 
         /// Static Job Queue
-        queue: rtx.StaticMessageQueue(jobQueueElement, queue_len, name ++ "Queue"),
+        queue: threadx.StaticQueue(jobQueueElement, queue_len, name ++ "Queue"),
 
         fn jobRunner(arg: ?*@This()) void {
             periodic_timer.start(1000) catch {};
@@ -44,7 +44,7 @@ pub fn JobQueueTask(comptime T: type, comptime stack_size: usize, comptime queue
         }
 
         pub fn submitJob(self: *@This(), jobfn: jobFnType, param1: jobFnParamType, timeout: u32) !void {
-            try self.queue.put(&jobQueueElement{ .job_fn = jobfn, .param1 = param1 }, 0, timeout);
+            try self.queue.send(&jobQueueElement{ .job_fn = jobfn, .param1 = param1 }, 0, timeout);
         }
 
         pub fn new(self: *@This(), priority: rtx.thread.osThreadPriority) !void {
